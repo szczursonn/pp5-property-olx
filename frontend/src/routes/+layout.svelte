@@ -1,5 +1,7 @@
 <script lang="ts">
     import { fetchUser } from "$lib/api";
+    import ErrorAlertModal from "$lib/components/ErrorAlertModal.svelte";
+    import { errorStore } from "$lib/stores/error";
     import { userStore } from "$lib/stores/user";
     import { onMount } from "svelte";
     import Footer from "../lib/components/Footer.svelte";
@@ -9,9 +11,21 @@
         userStore.update((currentData)=>{
             return {...currentData, loading: true}
         })
-        const user = await fetchUser('me')
+        try {
+            const user = await fetchUser('me')
+            userStore.update((currentData)=>{
+                return {...currentData, user}
+            })
+        } catch (err) {
+            console.error(err)
+            if (err instanceof TypeError) {
+                $errorStore.addError('Failed to connect to the backend.')
+            } else {
+                $errorStore.addError('There was an error authenticating the user. Check console for details.')
+            }
+        }
         userStore.update((currentData)=>{
-            return {...currentData, user, loading: false}
+            return {...currentData, loading: false}
         })
     })
 </script>
@@ -44,3 +58,4 @@
     <slot />
 </main>
 <Footer />
+<ErrorAlertModal />

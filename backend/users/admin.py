@@ -8,7 +8,7 @@ class UserAdmin(DjangoUserAdmin):
     """Define admin model for custom User model with no email field."""
 
     fieldsets = (
-        (None, {'fields': ('email', 'username', 'password', 'phone_number')}),
+        (None, {'fields': ('email', 'username', 'password', 'phone_number', 'avatar')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser',
                                        'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),

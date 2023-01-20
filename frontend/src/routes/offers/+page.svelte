@@ -4,7 +4,7 @@
     import OfferBrowserFilterForm from "$lib/components/OfferBrowserFilterForm.svelte";
     import { OFFER_CATEGORIES, OFFER_TYPES, SITE_TITLE } from "$lib/constants";
     import type { PageData } from "./$types";
-    import { BASE_URL } from '$lib/api'
+    import OfferList from "$lib/components/OfferList.svelte";
 
     let criteria: string[] = []
 
@@ -57,121 +57,24 @@
         align-items: center;
         flex-direction: column;
     }
-    .offers-container-container {
-        background-color: whitesmoke;
-        width: 100%;
-    }
-    .offers-container {
+    .content-container {
         max-width: 1024px;
         margin-left: auto;
         margin-right: auto;
     }
-    .offer {
-        display: flex;
-        align-items: center;
-        height: 150px;
-        padding: 10px;
-        margin-top: 10px;
-        margin-bottom: 10px;
-        background-color: white;
-        box-shadow: 0px 0px 3px rgba(128, 128, 128, 0.25);
-    }
-    .offer-photo {
-        width: 250px;
-        height: 150px;
-        object-fit: cover;
-    }
-    .offer-info {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        height: 100%;
-        width: 75%;
-        margin-left: 10px;
-    }
-    .offer-title {
-        margin-top: 5px;
-        font-weight: bold;
-        font-size: medium;
-    }
-    .offer-price {
-        display: inline-block;
-        margin-top: 5px;
-        font-weight: bold;
-        font-size: large;
-    }
-    .offer-area {
-        display: inline-block;
-        margin-left: 10px;
-        margin-top: 5px;
-    }
-    .offer-area-price-ratio {
-        @extend .offer-area;
-    }
-    .offer-info-lower {
-        font-size: small;
-        opacity: 80%;
-        margin-bottom: 5px;
-    }
-    @media (max-width: 600px) {
-        .offer {
-            flex-direction: column;
-            padding-bottom: 100px;
-        }
-        .offer-title {
-            margin-top: 5px;
-            margin-bottom: 5px;
-        }
-        .offer-price {
-            margin-top: 0;
-        }
-        .offer-photo {
-            width: 100%;
-        }
-        .offer-info {
-            width: 100%;
-        }
-        .offer-info-lower {
-            font-size: small;
-            margin: 0;
-        }
-    }
 </style>
 
 <div class="master-container">
-    <OfferBrowserFilterForm onSubmit={handleSubmit} />
-    <div>
-        <p>Found {data.offers.length} offers matching following criteria:</p>
-        <ul>
-            {#each criteria as c}
-                <li>{c}</li>
-            {/each}
-        </ul>
-    </div>
-    <div class="offers-container-container">
-        <div class="offers-container">
-            {#each data.offers as offer}
-            <a href={`/offers/${offer.id}`}>
-                <div class="offer">
-                    <img class="offer-photo" src={offer.photos.length > 0 ? BASE_URL+offer.photos[0].photo : "/assets/no-photo.jpg"} alt="">
-                    <div class="offer-info">
-                        <div>
-                            <p class="offer-title">{offer.title}</p>
-                            <div class="offer-details">
-                                <p class="offer-price">{offer.price ? `${offer.price} zł` : 'Ask for price'}</p>
-                                {#if offer.price && offer.squareMeters}
-                                    <p class="offer-area-price-ratio">{(offer.price/offer.squareMeters).toFixed(2).replace('.',',')} zł/m²</p>
-                                {/if}
-                                {#if offer.squareMeters}
-                                    <p class="offer-area">{offer.squareMeters.toFixed(2).replace('.',',')} m²</p>
-                                {/if}
-                            </div>
-                        </div>
-                        <p class="offer-info-lower">{offer.locationCityName} - Added {offer.createdAt.toLocaleDateString()}</p>
-                    </div>
-                </div>
-            </a>
-            {/each}
+    <div class="content-container">
+        <OfferBrowserFilterForm onSubmit={handleSubmit} />
+        <div>
+            <p>Found {data.offers.length} offers matching following criteria:</p>
+            <ul>
+                {#each criteria as c}
+                    <li>{c}</li>
+                {/each}
+            </ul>
         </div>
+        <OfferList offers={data.offers}></OfferList>
     </div>
 </div>

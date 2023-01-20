@@ -2,9 +2,12 @@ from rest_framework import status, permissions, generics, parsers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth.models import AnonymousUser
+from django.utils.timezone import now
+import datetime
 import geocoder
+
 from .models import Offer, OfferPhoto
-from .serializer import OfferSerializer
+from .serializers import OfferSerializer
 
 class OfferList(APIView):
     permissions_classes = (permissions.IsAuthenticatedOrReadOnly, )
@@ -12,45 +15,55 @@ class OfferList(APIView):
 
     def get(self, request, format=None):
 
-        p=request.query_params
+        offer_query = OfferQueryParams(request.query_params)
+        offers = Offer.objects.all()
 
-        q = Offer.objects.filter(status=Offer.OfferStatus.ACTIVE)
-        if 'category' in p:
-            q=q.filter(category=int(p['category']))
-        if 'type' in p:
-            q=q.filter(type=int(p['type']))
-        if 'city' in p:
-            city=p['city']
-            prox = int(p['proximity']) if 'proximity' in p else 0
+        if offer_query.author_id is not None:
+            offers=offers.filter(author_id=offer_query.author_id)
 
-            # if prox=0, query by city name, else query by distance
-            if prox==0:
-                q=q.filter(location_city_name__contains=city)
+        if offer_query.category is not None:
+            offers=offers.filter(category=offer_query.category)
+
+        if offer_query.type is not None:
+            offers=offers.filter(type=offer_query.type)
+
+        if offer_query.status is not None:
+            offers=offers.filter(status=offer_query.status)
+
+        if offer_query.city is not None:
+            if offer_query.proximity is None or offer_query.proximity==0:
+                offers=offers.filter(location_city_name__contains=offer_query.city)
             else:
-                location=geocoder.osm(city)
+                location=geocoder.osm(offer_query.city)
                 if not location.ok:
-                    return Response({'detail': 'Unable to locate'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response(
+                        {'detail': 'Unable to locate'}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
                 lat, lng = location.json['lat'], location.json['lng']
-                prox_deg = (prox/40000)*360
-                # TODO: proper query by proximity
-                q=q.filter(
-                    location_lat__lte=lat+prox_deg,
-                    location_lng__lte=lng+prox_deg,
-                    location_lat__gte=lat-prox_deg,
-                    location_lng__gte=lng-prox_deg
+                # TODO: proper proximity query instead of a bad rectangle
+                proximity_as_deg = (offer_query.proximity/40000)*360
+                offers=offers.filter(
+                    location_lat__lte=lat+proximity_as_deg,
+                    location_lng__lte=lng+proximity_as_deg,
+                    location_lat__gte=lat-proximity_as_deg,
+                    location_lng__gte=lng-proximity_as_deg
                 )
-        if 'price_min' in p:
-            q=q.filter(price__gte=int(p['price_min']))
-        if 'price_max' in p:
-            q=q.filter(price__lte=int(p['price_max']))
-        if 'area_min' in p:
-            q=q.filter(square_meters__gte=float(p['area_min']))
-        if 'area_max' in p:
-            q=q.filter(square_meters__lte=float(p['area_max']))
-        
-        q.prefetch_related('offerphoto_set')
 
-        offer_serializer = OfferSerializer(instance=list(q), many=True)
+        if offer_query.price_min is not None:
+            offers=offers.filter(price__gte=offer_query.price_min)
+        if offer_query.price_max is not None:
+            offers=offers.filter(price__lte=offer_query.price_max)
+
+        if offer_query.area_min is not None:
+            offers=offers.filter(square_meters__gte=offer_query.area_min)
+        if offer_query.area_max is not None:
+            offers=offers.filter(square_meters__lte=offer_query.area_max)
+        
+        offers.prefetch_related('offerphoto_set')
+
+        offer_serializer = OfferSerializer(instance=list(offers), many=True)
 
         return Response(offer_serializer.data, status=status.HTTP_200_OK)
     
@@ -116,15 +129,60 @@ class OfferList(APIView):
         responseData = {'id': offer.id, 'lat': lat, 'lng': lng}
         return Response(responseData, status=status.HTTP_201_CREATED)
 
+class OfferQueryParams:
+    category: int|None
+    type: int|None
+    status: int|None
+    author_id: int|None
+    city: str|None
+    proximity: int|None
+    price_min: int|None
+    price_max: int|None
+    area_min: float|None
+    area_max: float|None
+
+    def __init__(self, p):
+        self.category = int(p['category']) if 'category' in p else None
+        self.type = int(p['type']) if 'type' in p else None
+        self.status = int(p['status']) if 'status' in p else None
+        self.author_id = int(p['author_id']) if 'author_id' in p else None
+        self.city = p.get('city')
+        self.proximity = int(p['proximity']) if 'proximity' in p else None
+        self.price_min = int(p['price_min']) if 'price_min' in p else None
+        self.price_max = int(p['price_max']) if 'price_max' in p else None
+        self.area_min = float(p['area_min']) if 'area_min' in p else None
+        self.area_max = float(p['area_max']) if 'area_max' in p else None
+
+
 class OfferDetail(generics.RetrieveUpdateDestroyAPIView):
-    permission_classes = (permissions.AllowAny,)
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
     queryset = Offer.objects.all()
     serializer_class = OfferSerializer
 
-class RandomOffers(APIView):
+class RandomOffers(generics.ListAPIView):
     permission_classes = (permissions.AllowAny,)
-    def get(self, request, format=None):
-        q=Offer.objects.order_by('?')[:6]
-        offer_serializer = OfferSerializer(instance=list(q), many=True)
-        return Response(offer_serializer.data, status=status.HTTP_200_OK)
+
+    queryset = Offer.objects.filter(status=Offer.OfferStatus.ACTIVE).order_by('?')[:6]
+    serializer_class = OfferSerializer
+
+class OfferStatus(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def patch(self, request, pk, format=None):
+
+        offer = Offer.objects.get(id=pk)
+
+        if offer.author.pk != request.user.id:
+            return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+        offer.status = request.data.get('status')
+        if offer.status == Offer.OfferStatus.ACTIVE:
+            offer.active_until = now() + datetime.timedelta(days=3)
+        elif offer.status == Offer.OfferStatus.INACTIVE:
+            offer.active_until = now()
+        offer.save()
+
+        offer_serializer = OfferSerializer(instance=offer)
+
+        return Response(data=offer_serializer.data, status=status.HTTP_200_OK)

@@ -1,10 +1,13 @@
 import { browser } from "$app/environment"
 import { env } from "$env/dynamic/public";
-import type { Offer, User } from "./types"
+import { validateOffer, validateOffers, validateUser, type Offer, type User } from "./types"
 
 export const BASE_URL = env.PUBLIC_API_URL
 // SSR fetch resolves localhost to [::1] which doesnt work with django instead of 127.0.0.1, stupid
 //if (!browser) BASE_URL = BASE_URL.replace('localhost', '127.0.0.1')
+// alternatively, run django with --ipv6 flag
+
+/* Helper functions */
 
 const getCookie = (name: string) => {
     const value = `; ${document.cookie}`;
@@ -12,128 +15,144 @@ const getCookie = (name: string) => {
     if (parts.length === 2) return parts.pop()!.split(';').shift();
 }
 
-const authedFetch = ({url, method, jsonBody, formData, fetchFn}: {
+const authedFetch = async ({url, method, jsonBody, formData, fetchFn}: {
     url: string,
     method: 'GET'|'POST'|'PATCH'|'PUT'|'DELETE',
     jsonBody?: string,
     formData?: FormData
     fetchFn?: typeof fetch
 }) => {
+
     if (!fetchFn) fetchFn = fetch
 
     const headers: HeadersInit = {}
-
     if (jsonBody) {
         headers['Content-Type'] = 'application/json'
     }
-
     if (browser) {
         const csrfToken = getCookie('csrftoken')
         if (csrfToken) headers['X-CSRFToken']=csrfToken
     }
 
-    return fetchFn(`${BASE_URL}/${url}`, {
+    const res = await fetchFn(`${BASE_URL}/api${url}`, {
         credentials: 'include',
         method,
         body: jsonBody || formData,
         headers
     })
+
+    let data: any = undefined
+    try {
+        data = await res.json()
+    } catch (err) {
+
+    }
+
+    return {
+        status: res.status,
+        ok: res.ok,
+        data
+    }
 }
 
+/* Users */
+
 export const fetchUser = async (userId: number|'me', fetchFn?: typeof fetch): Promise<User|null> => {
-    const res = await authedFetch({
-        url: `api/users/${userId}`,
+    const { status, ok, data } = await authedFetch({
+        url: `/users/${userId}`,
         method: 'GET',
         fetchFn
     })
-    const data = await res.json()
-    if (res.status === 404) return null
-    if (!res.ok) throw new Error(JSON.stringify(data))
+    if (status === 404) return null
+    if (!ok) throw new Error(JSON.stringify(data))
 
-    data.phoneNumber=data.phone_number
-    delete data.phone_number
-    data.authorId=data.author_id
-    delete data.author_id
-    data.isStaff=data.is_staff
-    delete data.is_staff
-
-    return data as User
+    try {
+        return validateUser(data)
+    } catch (err) {
+        throw err
+    }
 }
 
-export const login = async (email: string, password: string) => {
-    const res = await authedFetch({
-        url: 'api/auth/login/',
+export const changeUsername = async (username: string): Promise<User> => {
+    const { ok, data } = await authedFetch({
+        url: '/users/me/username/',
+        method: 'PATCH',
+        jsonBody: JSON.stringify({username})
+    })
+
+    if (!ok) throw new Error(JSON.stringify(data))
+
+    return validateUser(data)
+
+}
+
+export const changeAvatar = async (file: File|null) => {
+
+    const payload = new FormData()
+    if (file) payload.append('avatar', file, file.name)
+
+    const { ok, data } = await authedFetch({
+        url: '/users/me/avatar/',
+        method: file ? 'PATCH' : 'DELETE',
+        formData: file ? payload : undefined
+    })
+
+    if (!ok) throw new Error(JSON.stringify(data))
+
+    return validateUser(data)
+}
+
+/* Auth */
+
+export const login = async (email: string, password: string): Promise<void> => {
+    const { ok, data } = await authedFetch({
+        url: '/auth/login/',
         method: 'POST',
         jsonBody: JSON.stringify({email, password})
     })
-    if (!res.ok) throw new Error(JSON.stringify(await res.json()))
+    if (!ok) {
+        throw new Error(JSON.stringify(data))
+    }
 }
 
 export const logout = async () => {
-    const res = await authedFetch({
-        url: 'api/auth/logout/',
+    const { ok, data } = await authedFetch({
+        url: '/auth/logout/',
         method: 'POST'
     })
-    if (!res.ok) throw new Error(JSON.stringify(await res.json()))
+    if (!ok) throw new Error(JSON.stringify(data))
 }
 
 export const register = async ({email, password, username, phoneNumber}: {email: string, password: string, username?: string, phoneNumber?: string}) => {
-    const res = await authedFetch({
-        url: 'api/auth/register/',
+    const { ok, data } = await authedFetch({
+        url: '/auth/register/',
         method: 'POST',
         jsonBody: JSON.stringify({email, password, username, phoneNumber})
     })
-    if (!res.ok) throw new Error(JSON.stringify(await res.json()))
+    if (!ok) throw new Error(JSON.stringify(data))
 }
 
-const camelcasifyOffer = (offer: any) => {
-    offer.squareMeters = offer.square_meters
-    delete offer.square_meters
-    offer.locationLat = offer.location_lat
-    delete offer.location_lat
-    offer.locationLng = offer.location_lng
-    delete offer.location_lng
-    offer.locationCityName = offer.location_city_name
-    delete offer.location_city_name
-    offer.locationStreetName = offer.location_street_name
-    delete offer.location_street_name
-    offer.locationHouseNumber = offer.location_house_number
-    delete offer.location_house_number
-    offer.locationAptNumber = offer.location_apt_number
-    delete offer.location_apt_number
-    offer.authorId = offer.author_id
-    delete offer.author_id
-    offer.createdAt = offer.created_at
-    delete offer.created_at
+/* Offers */
 
-    offer.createdAt = new Date(offer.createdAt)
-}
-
-export const fetchOffers = async (params: URLSearchParams, fetchFn: typeof fetch) => {
-    const res = await authedFetch({
-        url: `api/offers/?${params.toString()}`,
+export const fetchOffers = async (params: URLSearchParams, fetchFn: typeof fetch): Promise<Offer[]> => {
+    const { data } = await authedFetch({
+        url: `/offers/?${params.toString()}`,
         method: 'GET',
         fetchFn
     })
-    const data = await res.json()
 
-    // convert to camelcase
-    for (let offer of data) {
-        camelcasifyOffer(offer)
-    }
-
-    return data as Offer[]
+    return validateOffers(data)
 }
 
-export const fetchOffer = async (offerId: string, fetchFn: typeof fetch) => {
-    const res = await authedFetch({
-        url: `api/offers/${offerId}`,
+export const fetchOffer = async (offerId: string, fetchFn: typeof fetch): Promise<Offer|null> => {
+    const { status, data } = await authedFetch({
+        url: `/offers/${offerId}`,
         method: 'GET',
         fetchFn
     })
-    const data = await res.json()
-    camelcasifyOffer(data)
-    return data as Offer
+    if (status === 404) return null
+    
+    return validateOffer(data)
 }
 
 export const createOffer = async ({title, description, category, type, squareMeters, price, cityName, streetName, houseNumber, apartmentNumber, photos}: {
@@ -165,23 +184,35 @@ export const createOffer = async ({title, description, category, type, squareMet
         payload.append('photos', photo, photo.name)
     }
 
-    const res = await authedFetch({
-        url: 'api/offers/',
+    const { ok, data } = await authedFetch({
+        url: '/offers/',
         method: 'POST',
         formData: payload
     })
-    const data = await res.json()
-    if (!res.ok) throw new Error(JSON.stringify(data))
-    return data.id as number
+    if (!ok) throw new Error(JSON.stringify(data))
+    if (typeof data === 'object' && typeof data.id === 'number') {
+        return data.id as number
+    }
+    throw new Error('create offer response validation fail')
 }
 
 export const getRandomOffers = async () => {
-    const res = await authedFetch({
-        url: 'api/offers/suggested',
+    const { ok, data } = await authedFetch({
+        url: '/offers/suggested',
         method: 'GET'
     })
-    const data = await res.json()
-    if (!res.ok) throw new Error(JSON.stringify(data))
-    data.forEach(camelcasifyOffer)
-    return data as Offer[]
+    if (!ok) throw new Error(JSON.stringify(data))
+    
+    return validateOffers(data)
+}
+
+export const changeOfferStatus = async (offerId: number, newStatus: 0 | 1) => {
+    const { ok, data } = await authedFetch({
+        url: `/offers/${offerId}/status`,
+        method: 'PATCH',
+        jsonBody: JSON.stringify({status: newStatus})
+    })
+    if (!ok) throw new Error(JSON.stringify(data))
+
+    return validateOffer(data)
 }

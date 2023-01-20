@@ -31,6 +31,7 @@ class OfferSerializer(serializers.ModelSerializer):
             'location_house_number',
             'location_apt_number',
             'author_id',
+            'active_until',
             'created_at',
             'photos'
         ]

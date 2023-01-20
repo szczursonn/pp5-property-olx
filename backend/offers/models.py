@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.db import models
 from django.utils.timezone import now
 from django.utils.safestring import mark_safe
@@ -17,13 +18,11 @@ class Offer(models.Model):
         WAREHOUSE = 6
         OTHER = 7
     class OfferStatus(models.IntegerChoices):
-        DRAFT = 0
-        ACTIVE = 1
-        INACTIVE = 2
-        CLOSED = 3
+        ACTIVE = 0
+        INACTIVE = 1
     
     title = models.CharField(
-        max_length=30
+        max_length=50
     )
     description = models.CharField(
         max_length=1000,
@@ -48,7 +47,8 @@ class Offer(models.Model):
     )
     price = models.IntegerField(
         blank=True,
-        null=True
+        null=True,
+        validators=[]
     )
     location_lat = models.DecimalField(
         decimal_places=5,
@@ -80,6 +80,9 @@ class Offer(models.Model):
         User,
         on_delete=models.CASCADE,
     )
+    active_until = models.DateTimeField(
+        default=now()+timedelta(days=3)
+    )
     created_at = models.DateTimeField(
         default=now
     )
@@ -90,6 +93,10 @@ class Offer(models.Model):
                 name='no_apt_number_if_no_house_number',
                 check=models.Q(location_house_number__isnull=True, location_apt_number__isnull=True) | 
                 models.Q(location_house_number__isnull=False)
+            ),
+            models.CheckConstraint(
+                name='active_until_greater_than_created_at',
+                check=models.Q(active_until__gt=models.F('created_at'))
             )
         ]
     

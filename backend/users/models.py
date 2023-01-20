@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.utils.safestring import mark_safe
 from django.db import models
 
 class UserManager(BaseUserManager):
@@ -33,8 +34,9 @@ class UserManager(BaseUserManager):
 
 class User(AbstractUser):
     username = models.CharField(max_length=30)
-    phone_number = models.CharField(max_length=15, blank=True, null=True)
     email = models.EmailField(unique=True)
+    phone_number = models.CharField(max_length=15, blank=True, null=True)
+    avatar = models.ImageField(upload_to='user_avatars', blank=True, null=True)
 
     first_name=None
     last_name=None

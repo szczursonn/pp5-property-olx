@@ -5,6 +5,7 @@ export const load = (async ({url, fetch}) => {
     const searchParams = url.searchParams
     if (!searchParams.has('category')) searchParams.set('category', '0')
     if (!searchParams.has('type')) searchParams.set('type', '0')
+    searchParams.set('status', '0') // active
     return {
         offers: await fetchOffers(url.searchParams, fetch),
         params: url.searchParams

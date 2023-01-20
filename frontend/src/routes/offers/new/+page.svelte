@@ -63,6 +63,7 @@
         max-width: 1024px;
         margin-left: auto;
         margin-right: auto;
+        padding-bottom: 32px;
     }
     form {
         display: flex;
@@ -156,73 +157,78 @@
             }
         }
     }
+    .login-link {
+        cursor: pointer;
+        transition: color 200ms;
+        &:hover {
+            color: var(--cta);
+        }
+    }
 </style>
 
 <svelte:head>
     <title>New offer | {SITE_TITLE}</title>
 </svelte:head>
 
-<div>
-    <div class="inner-container">
-        <h2>Create an offer</h2>
-        {#if $userStore.user}
-        <form on:submit|preventDefault={handleSubmit}>
-            <h3>Title and description</h3>
-            <h4>Title is required, it is highly recommended to add a description</h4>
-            <input type="text" placeholder="Title" required={true} bind:value={title}>
-            <textarea placeholder="Description" bind:value={description}></textarea>
-            <h3>Category</h3>
-            <h4>Select category and type of your offer</h4>
-            <div class="select-container">
-                <select bind:value={category}>
-                    {#each OFFER_CATEGORIES as {label, value}}
-                        <option value={value}>{label}</option>
-                    {/each}
-                </select>
-                <span></span>
-                <select bind:value={type}>
-                    {#each OFFER_TYPES as {label, value}}
-                        <option value={value}>{label}</option>
-                    {/each}
-                </select>
-            </div>
-            <h3>Parameters</h3>
-            <h4>Setting these will help users see your offers</h4>
-            <div class="number-form-input">
-                <input type="number" placeholder="Price" min={0} bind:value={price}>
-                <span>zł</span>
-                <input type="number" placeholder="Surface area" min={0} bind:value={area}>
-                <span>m²</span>
-            </div>
-            <h3>Location</h3>
-            <h4>City is required, other fields are recommended</h4>
-            <div>
-                <input type="text" placeholder="City" required={true} bind:value={city}>
-                <input type="text" placeholder="Street name" bind:value={streetName}>
-                <input type="text" placeholder="House number" bind:value={houseNumber}>
-                <input type="text" placeholder="Apartment number" bind:value={apartmentNumber}>
-            </div>
-            <h3>Photos</h3>
-            <h4>Attach photos here</h4>
-            <label for="file-upload" class="file-upload-label">Upload</label>
-            <input id="file-upload" type="file" name="Photos" accept="image/*" multiple={true} bind:this={fileInput} on:change={handleFileInput}>
-            <div class="photos-container">
-                {#each photos as file}
-                    <div class="photo-container">
-                        <img class="photo" src={URL.createObjectURL(file)} alt={''}>
-                        <img class="photo-close-btn" src="/assets/plus-icon.svg" alt="" on:click={()=>handleFileRemove(file)} on:keypress={()=>handleFileRemove(file)}>
-                    </div>
+<div class="inner-container">
+    <h2>Create an offer</h2>
+    {#if $userStore.user}
+    <form on:submit|preventDefault={handleSubmit}>
+        <h3>Title and description</h3>
+        <h4>Title is required, it is highly recommended to add a description</h4>
+        <input type="text" placeholder="Title" required={true} bind:value={title}>
+        <textarea placeholder="Description" bind:value={description}></textarea>
+        <h3>Category</h3>
+        <h4>Select category and type of your offer</h4>
+        <div class="select-container">
+            <select bind:value={category}>
+                {#each OFFER_CATEGORIES as {label, value}}
+                    <option value={value}>{label}</option>
                 {/each}
-            </div>
-            {#if error}
-                <p>There was an error: </p>
-                <pre>{error}</pre>
-            {/if}
-            <input type="submit" value="Create" disabled={isLoading}>
-        </form>
-        {:else}
-            <h3>You need to be signed in to add an offer</h3>
-            <a href="/login">Sign in</a>
+            </select>
+            <span></span>
+            <select bind:value={type}>
+                {#each OFFER_TYPES as {label, value}}
+                    <option value={value}>{label}</option>
+                {/each}
+            </select>
+        </div>
+        <h3>Parameters</h3>
+        <h4>Setting these will help users see your offers</h4>
+        <div class="number-form-input">
+            <input type="number" placeholder="Price" min={0} bind:value={price}>
+            <span>zł</span>
+            <input type="number" placeholder="Surface area" min={0} bind:value={area}>
+            <span>m²</span>
+        </div>
+        <h3>Location</h3>
+        <h4>City is required, other fields are recommended</h4>
+        <div>
+            <input type="text" placeholder="City" required={true} bind:value={city}>
+            <input type="text" placeholder="Street name" bind:value={streetName}>
+            <input type="text" placeholder="House number" bind:value={houseNumber}>
+            <input type="text" placeholder="Apartment number" bind:value={apartmentNumber}>
+        </div>
+        <h3>Photos</h3>
+        <h4>Attach photos here</h4>
+        <label for="file-upload" class="file-upload-label">Upload</label>
+        <input id="file-upload" type="file" name="Photos" accept="image/*" multiple={true} bind:this={fileInput} on:change={handleFileInput}>
+        <div class="photos-container">
+            {#each photos as file}
+                <div class="photo-container">
+                    <img class="photo" src={URL.createObjectURL(file)} alt={''}>
+                    <img class="photo-close-btn" src="/assets/plus-icon.svg" alt="" on:click={()=>handleFileRemove(file)} on:keypress={()=>handleFileRemove(file)}>
+                </div>
+            {/each}
+        </div>
+        {#if error}
+            <p>There was an error: </p>
+            <pre>{error}</pre>
         {/if}
-    </div>
+        <input type="submit" value="Create" disabled={isLoading || title.length === 0 || city.length === 0}>
+    </form>
+    {:else}
+        <h3>You need to be signed in to add an offer</h3>
+        <a class="login-link" href="/login">Sign in</a>
+    {/if}
 </div>

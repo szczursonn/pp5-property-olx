@@ -2,8 +2,9 @@
     import { goto } from "$app/navigation";
     import { BASE_URL, logout } from "$lib/api";
     import clickOutside from "$lib/clickOutside";
-    import { SITE_TITLE } from "$lib/constants";
+    import { NO_IMAGE_PHOTO, SITE_TITLE } from "$lib/constants";
     import { userStore } from "$lib/stores/user";
+    import LoadingSpinner from "./LoadingSpinner.svelte";
     import options from './NavbarData'
     
     let selectedIndex = -1
@@ -97,7 +98,7 @@
         padding: 8px;
         transition: color 150ms;
         &:hover {
-            color: orange;
+            color: var(--cta);
             cursor: pointer;
         }
     }
@@ -182,6 +183,7 @@
     .account-username {
         margin: 5px 20px;
         font-size: large;
+        text-align: center;
     }
     .account-email {
         @extend .account-username;
@@ -298,6 +300,12 @@
             transform: rotate(-180deg);
         }
     }
+    .user-avatar {
+        object-fit: cover;
+        height: 80px;
+        width: 80px;
+        border-radius: 50%;
+    }
 </style>
 
 <header use:clickOutside={closeDrawer}>
@@ -331,12 +339,17 @@
             <hr />
             <div class="my-account-btn-container">
                 <a class="my-account-btn" href="/login" on:click|preventDefault={handleMyAccountClick} use:clickOutside={()=>isMyAccountSelected=false}>
-                    <img src='/assets/user-profile-icon.svg' alt="User profile icon">
-                    <div>My account</div>
+                    {#if $userStore.loading}
+                        <LoadingSpinner></LoadingSpinner>
+                    {:else}
+                        <img src='/assets/user-profile-icon.svg' alt="User profile icon">
+                        <div>My account</div>
+                    {/if}
                 </a>
                 <ul class="navbar-dropdown-items-container" class:visible={isMyAccountSelected}>
                     <li class="navbar-dropdown-item account-dropdown-item">
-                        <p class="account-username">{$userStore.user?.username}</p>
+                        <img class="user-avatar" src={$userStore.user?.avatar ?? NO_IMAGE_PHOTO.url} alt={`${$userStore.user?.username}'s avatar'`}>
+                        <a class="account-username" href={`/users/${$userStore.user?.id}`}>{$userStore.user?.username}</a>
                         <p class="account-email">{$userStore.user?.email}</p>
                     </li>
                     {#if $userStore?.user?.isStaff}

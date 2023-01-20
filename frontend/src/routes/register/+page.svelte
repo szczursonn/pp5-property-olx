@@ -1,15 +1,13 @@
 <script lang="ts">
     import { register } from "$lib/api";
     import { SITE_TITLE } from "$lib/constants";
-
-
+    import { errorStore } from "$lib/stores/error";
 
     let email = ''
     let password = ''
     let username = ''
     let phoneNumber = ''
     let isLoading = false
-    let error = ''
 
     const handleSubmit = async () => {
         isLoading=true
@@ -24,7 +22,7 @@
             window.location.href = '/'
         } catch (err) {
             console.error(err)
-            error=String(err)
+            $errorStore.addError(`Failed to register. Check console for details.`)
         }
         isLoading=false
     }
@@ -86,11 +84,7 @@
         
         <input class="text-input" bind:value={phoneNumber} id="login-input-phone" type="text" disabled={isLoading}>
 
-        <input type="submit" value="Register" disabled={isLoading}>
-        {#if error}
-            <p>There was an error: </p>
-            <pre>{JSON.stringify(error)}</pre>
-        {/if}
+        <input type="submit" value="Register" disabled={isLoading || email.length === 0 || password.length === 0}>
         <p>Already have an account? <a class="login-link" href="/login">Login here</a></p>
     </form>
 </div>

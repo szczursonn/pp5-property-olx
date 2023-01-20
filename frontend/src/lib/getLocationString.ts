@@ -1,9 +1,9 @@
 import type { Offer } from "./types"
 
 export const getLocationString = (offer: Offer): string => {
-    let str = offer.locationCityName
-    if (offer.locationStreetName) str+=', '+offer.locationStreetName
-    if (offer.locationHouseNumber) str+=' '+offer.locationHouseNumber
-    if (offer.locationAptNumber) str+=' '+offer.locationAptNumber
+    let str = offer.location.city
+    if (offer.location.street) str+=', '+offer.location.street
+    if (offer.location.house) str+=' '+offer.location.house
+    if (offer.location.apt) str+=' '+offer.location.apt
     return str
 }
