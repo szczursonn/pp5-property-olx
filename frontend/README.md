@@ -15,6 +15,7 @@ You can set enviroment variables yourself or use a .env file
 |Variable|Description|Required?|
 | - | - | - |
 |PUBLIC_API_URL|URL for the backend|Yes|
+|PUBLIC_API_URL__SERVER|URL for the backend but for sveltekit server|Yes|
 
 4. Run dev server
 ```

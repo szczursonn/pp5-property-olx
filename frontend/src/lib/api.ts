@@ -2,7 +2,7 @@ import { browser } from "$app/environment"
 import { env } from "$env/dynamic/public";
 import { validateOffer, validateOffers, validateUser, type Offer, type User } from "./types"
 
-export const BASE_URL = env.PUBLIC_API_URL
+export const BASE_URL = (browser ? env.PUBLIC_API_URL : env.PUBLIC_API_URL__SERVER)!
 // SSR fetch resolves localhost to [::1] which doesnt work with django instead of 127.0.0.1, stupid
 //if (!browser) BASE_URL = BASE_URL.replace('localhost', '127.0.0.1')
 // alternatively, run django with --ipv6 flag

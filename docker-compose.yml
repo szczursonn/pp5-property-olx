@@ -1,0 +1,27 @@
+version: '1.0'
+services:
+  web:
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PUBLIC_API_URL=${PUBLIC_API_URL}
+      - PUBLIC_API_URL__SERVER=http://backend:8000
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ./Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - SECRET_KEY=${SECRET_KEY}
+      - ORIGINS=${ORIGINS}
+      - DEBUG=${DEBUG}
+  db:
+    image: mysql:8.0.32
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
