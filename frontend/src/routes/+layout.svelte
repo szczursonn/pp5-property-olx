@@ -20,6 +20,8 @@
             console.error(err)
             if (err instanceof TypeError) {
                 $errorStore.addError('Failed to connect to the backend.')
+            } else if (String(err).includes('Authentication credentials were not provided.')) {
+                // nothing
             } else {
                 $errorStore.addError('There was an error authenticating the user. Check console for details.')
             }
