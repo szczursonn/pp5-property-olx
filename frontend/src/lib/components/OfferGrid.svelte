@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { BASE_URL } from "$lib/api";
     import { NO_IMAGE_PHOTO } from "$lib/constants";
     import { getLocationString } from "$lib/getLocationString";
     import type { Offer } from "$lib/types";
