@@ -1,19 +1,19 @@
 <script lang="ts">
-    import { changeAvatar, changeUsername } from "$lib/api";
-    import OfferGrid from "$lib/components/OfferGrid.svelte";
-    import { NO_IMAGE_PHOTO, SITE_TITLE } from "$lib/constants";
-    import { errorStore } from "$lib/stores/error";
-    import { userStore } from "$lib/stores/user";
-    import type { Offer, User } from "$lib/types";
-    import { onDestroy } from "svelte";
-    import type { PageData } from "./$types";
+    import { changeAvatar, changeUsername } from '$lib/api'
+    import OfferGrid from '$lib/components/OfferGrid.svelte'
+    import { NO_IMAGE_PHOTO, SITE_TITLE } from '$lib/constants'
+    import { errorStore } from '$lib/stores/error'
+    import { userStore } from '$lib/stores/user'
+    import type { Offer, User } from '$lib/types'
+    import { onDestroy } from 'svelte'
+    import type { PageData } from './$types'
 
     export let data: PageData
 
     // WHAT THE FUCK IS GOING ON
     // navigating between slugs doesnt remount the page so <script> does not run a second time and state is persisted
     // https://github.com/sveltejs/kit/issues/1497
-    let prevData: PageData|null = null
+    let prevData: PageData | null = null
     $: ((data: PageData) => {
         if (prevData?.user?.id === data.user?.id) {
             // user id same = no navigation
@@ -26,11 +26,11 @@
 
     let activeOffers: Offer[] = data.offers
     let isCurrentUser = false
-    let user: User|null = data.user
+    let user: User | null = data.user
 
     const updateDerivedVariables = (store: typeof $userStore) => {
         user = data.user
-        activeOffers = data.offers.filter(o=>o.status===0)
+        activeOffers = data.offers.filter((o) => o.status === 0)
         if (store.user && data.user?.id === store.user.id) {
             user = store.user
             isCurrentUser = true
@@ -51,16 +51,16 @@
 
     let newUsername = ''
     let isEditingUsername = false
-    let isSavingUsername = false    
+    let isSavingUsername = false
     const handleUsernameEditorToggle = () => {
         isEditingUsername = !isEditingUsername
-        newUsername = (user?.username) ?? ''
+        newUsername = user?.username ?? ''
     }
     const handleUsernameSave = async () => {
         isSavingUsername = true
         try {
             const newUser = await changeUsername(newUsername)
-            userStore.set({...$userStore, user: newUser})
+            userStore.set({ ...$userStore, user: newUser })
             handleUsernameEditorToggle()
         } catch (err) {
             console.error(err)
@@ -81,15 +81,15 @@
         const file = fileInputEl?.files![0]
         _updateAvatar(file)
     }
-    const _updateAvatar = async (file: File|null) => {
+    const _updateAvatar = async (file: File | null) => {
         isSavingAvatar = true
-        
+
         try {
             const user = await changeAvatar(file)
             // avatar overriden because browser might attempt to load image from server before it is accessible so we just use local file
             userStore.set({
                 ...$userStore,
-                user
+                user,
             })
         } catch (err) {
             console.error(err)
@@ -98,8 +98,71 @@
 
         isSavingAvatar = false
     }
-
 </script>
+
+<svelte:head>
+    <title>{user?.username ?? '404'} | {SITE_TITLE}</title>
+</svelte:head>
+
+<div class="page-container">
+    <div class="content-container">
+        {#if user}
+            <div class="user-avatar-container">
+                <img class="user-avatar" src={user?.avatar ?? NO_IMAGE_PHOTO.url} alt={`${user?.username}'s avatar'`} />
+                {#if isCurrentUser}
+                    <button on:click={handleEditClick} disabled={isSavingAvatar}>edit</button>
+                    <button on:click={handleDeleteClick} disabled={isSavingAvatar}>delete</button>
+                {/if}
+                <input style="display: none;" id="file-upload" type="file" name="Photos" accept="image/*" bind:this={fileInputEl} on:change={handleFileInput} />
+            </div>
+            <div class="username-container">
+                {#if isEditingUsername}
+                    <input disabled={isSavingUsername} type="text" placeholder="username" bind:value={newUsername} />
+                    <button on:click={handleUsernameEditorToggle} disabled={isSavingUsername}>✕</button>
+                    <button on:click={handleUsernameSave} disabled={isSavingUsername || newUsername.length === 0}>💾</button>
+                {:else}
+                    <h2>{user?.username}</h2>
+                    {#if isCurrentUser}
+                        <img
+                            class="edit-icon"
+                            src="/assets/edit-icon.svg"
+                            alt="Change your username"
+                            on:click={handleUsernameEditorToggle}
+                            on:keypress={handleUsernameEditorToggle}
+                        />
+                    {/if}
+                {/if}
+
+                {#if user.isStaff}
+                    <h2 class="is-staff">staff</h2>
+                {/if}
+            </div>
+            <p class="contact-info">
+                <img class="contact-icon" src="/assets/mail-icon.svg" alt="Email" />
+                <a href={`mailto:${user.email}`}>{user.email}</a>
+            </p>
+            <p class="contact-info">
+                <img class="contact-icon" src="/assets/phone-icon.svg" alt="Phone number" />
+                {user.phoneNumber ?? 'Not provided'}
+            </p>
+            <h3>
+                {showInactiveOffers ? 'All ' : ''}{user.username}'s offers ({showInactiveOffers ? data.offers.length : activeOffers.length}):
+                {#if isCurrentUser || $userStore.user?.isStaff}
+                    <span class="inactive-toggle" on:click={handleShowInactiveOffersToggle} on:keypress={handleShowInactiveOffersToggle}
+                        >{showInactiveOffers ? 'Hide' : 'Show'} inactive offers</span
+                    >
+                {/if}
+            </h3>
+            {#if (showInactiveOffers ? data.offers : activeOffers).length > 0}
+                <OfferGrid offers={showInactiveOffers ? data.offers : activeOffers} />
+            {:else}
+                <p>No offers :(</p>
+            {/if}
+        {:else}
+            <h2>404</h2>
+        {/if}
+    </div>
+</div>
 
 <style lang="scss">
     .page-container {
@@ -159,59 +222,3 @@
         border-radius: 50%;
     }
 </style>
-
-<svelte:head>
-    <title>{user?.username ?? '404'} | {SITE_TITLE}</title>
-</svelte:head>
-
-<div class="page-container">
-    <div class="content-container">
-        {#if user}
-            <div class="user-avatar-container">
-                <img class="user-avatar" src={user?.avatar ?? NO_IMAGE_PHOTO.url} alt={`${user?.username}'s avatar'`}>
-                {#if isCurrentUser}
-                    <button on:click={handleEditClick} disabled={isSavingAvatar}>edit</button>
-                    <button on:click={handleDeleteClick} disabled={isSavingAvatar}>delete</button>
-                {/if}
-                <input style="display: none;" id="file-upload" type="file" name="Photos" accept="image/*" bind:this={fileInputEl} on:change={handleFileInput}>
-            </div>
-            <div class="username-container">
-                {#if isEditingUsername}
-                    <input disabled={isSavingUsername} type="text" placeholder="username" bind:value={newUsername}>
-                    <button on:click={handleUsernameEditorToggle} disabled={isSavingUsername}>✕</button>
-                    <button on:click={handleUsernameSave} disabled={isSavingUsername || newUsername.length === 0}>💾</button>
-                {:else}
-                    <h2>{user?.username}</h2>
-                    {#if isCurrentUser}
-                        <img class="edit-icon" src="/assets/edit-icon.svg" alt="Change your username" on:click={handleUsernameEditorToggle} on:keypress={handleUsernameEditorToggle}>
-                    {/if}
-                {/if}
-
-                {#if user.isStaff}
-                    <h2 class="is-staff">staff</h2>
-                {/if}
-            </div>
-            <p class="contact-info">
-                <img class="contact-icon" src="/assets/mail-icon.svg" alt="Email">
-                <a href={`mailto:${user.email}`}>{user.email}</a>
-            </p>
-            <p class="contact-info">
-                <img class="contact-icon" src="/assets/phone-icon.svg" alt="Phone number">
-                {user.phoneNumber ?? 'Not provided'}
-            </p>
-            <h3>
-                {showInactiveOffers ? 'All ' : ''}{user.username}'s offers ({showInactiveOffers ? data.offers.length : activeOffers.length}): 
-                {#if isCurrentUser || $userStore.user?.isStaff}
-                    <span class="inactive-toggle" on:click={handleShowInactiveOffersToggle} on:keypress={handleShowInactiveOffersToggle}>{showInactiveOffers ? 'Hide' : 'Show'} inactive offers</span>
-                {/if}
-            </h3>
-            {#if (showInactiveOffers ? data.offers : activeOffers).length > 0}
-                <OfferGrid offers={showInactiveOffers ? data.offers : activeOffers} />
-            {:else}
-                <p>No offers :(</p>
-            {/if}
-        {:else}
-            <h2>404</h2>
-        {/if}
-    </div>
-</div>

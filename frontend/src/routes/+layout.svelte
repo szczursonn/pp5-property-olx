@@ -1,20 +1,20 @@
 <script lang="ts">
-    import { fetchUser } from "$lib/api";
-    import ErrorAlertModal from "$lib/components/ErrorAlertModal.svelte";
-    import { errorStore } from "$lib/stores/error";
-    import { userStore } from "$lib/stores/user";
-    import { onMount } from "svelte";
-    import Footer from "../lib/components/Footer.svelte";
-    import Navbar from "../lib/components/Navbar.svelte";
+    import { fetchUser } from '$lib/api'
+    import ErrorAlertModal from '$lib/components/ErrorAlertModal.svelte'
+    import { errorStore } from '$lib/stores/error'
+    import { userStore } from '$lib/stores/user'
+    import { onMount } from 'svelte'
+    import Footer from '../lib/components/Footer.svelte'
+    import Navbar from '../lib/components/Navbar.svelte'
 
-    onMount(async ()=>{
-        userStore.update((currentData)=>{
-            return {...currentData, loading: true}
+    onMount(async () => {
+        userStore.update((currentData) => {
+            return { ...currentData, loading: true }
         })
         try {
             const user = await fetchUser('me')
-            userStore.update((currentData)=>{
-                return {...currentData, user}
+            userStore.update((currentData) => {
+                return { ...currentData, user }
             })
         } catch (err) {
             console.error(err)
@@ -26,15 +26,22 @@
                 $errorStore.addError('There was an error authenticating the user. Check console for details.')
             }
         }
-        userStore.update((currentData)=>{
-            return {...currentData, loading: false}
+        userStore.update((currentData) => {
+            return { ...currentData, loading: false }
         })
     })
 </script>
 
+<Navbar />
+<main>
+    <slot />
+</main>
+<Footer />
+<ErrorAlertModal />
+
 <style style="scss">
     :root {
-        --cta: #00B54B;
+        --cta: #00b54b;
         --navbar-text-color: whitesmoke;
         --navbar-bg-color: #464b53;
     }
@@ -54,10 +61,3 @@
         height: auto;
     }
 </style>
-
-<Navbar />
-<main>
-    <slot />
-</main>
-<Footer />
-<ErrorAlertModal />

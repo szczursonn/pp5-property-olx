@@ -1,18 +1,18 @@
 <script lang="ts">
-    import { goto } from "$app/navigation";
-    import { createOffer } from "$lib/api";
-    import { OFFER_CATEGORIES, OFFER_TYPES, SITE_TITLE } from "$lib/constants";
-    import { userStore } from "$lib/stores/user";
+    import { goto } from '$app/navigation'
+    import { createOffer } from '$lib/api'
+    import { OFFER_CATEGORIES, OFFER_TYPES, SITE_TITLE } from '$lib/constants'
+    import { userStore } from '$lib/stores/user'
 
     let isLoading = false
-    let error: string|null = null
+    let error: string | null = null
 
     let title: string = ''
     let description: string = ''
     let category: number
     let type: number
-    let price: number|null = null
-    let area: number|null = null
+    let price: number | null = null
+    let area: number | null = null
     let city: string = ''
     let streetName: string = ''
     let houseNumber: string = ''
@@ -29,7 +29,7 @@
         photos = photos
     }
     const handleFileRemove = (f: File) => {
-        const i = photos.findIndex(file=>file===f)
+        const i = photos.findIndex((file) => file === f)
         photos.splice(i, 1)
         photos = photos
     }
@@ -48,15 +48,88 @@
                 streetName,
                 houseNumber,
                 apartmentNumber,
-                photos
+                photos,
             })
             goto(`/offers/${offerId}`)
         } catch (err) {
-            error=String(err)
+            error = String(err)
         }
         isLoading = false
     }
 </script>
+
+<svelte:head>
+    <title>New offer | {SITE_TITLE}</title>
+</svelte:head>
+
+<div class="inner-container">
+    <h2>Create an offer</h2>
+    {#if $userStore.user}
+        <form on:submit|preventDefault={handleSubmit}>
+            <h3>Title and description</h3>
+            <h4>Title is required, it is highly recommended to add a description</h4>
+            <input type="text" placeholder="Title" required={true} bind:value={title} />
+            <textarea placeholder="Description" bind:value={description} />
+            <h3>Category</h3>
+            <h4>Select category and type of your offer</h4>
+            <div class="select-container">
+                <select bind:value={category}>
+                    {#each OFFER_CATEGORIES as { label, value }}
+                        <option {value}>{label}</option>
+                    {/each}
+                </select>
+                <span />
+                <select bind:value={type}>
+                    {#each OFFER_TYPES as { label, value }}
+                        <option {value}>{label}</option>
+                    {/each}
+                </select>
+            </div>
+            <h3>Parameters</h3>
+            <h4>Setting these will help users see your offers</h4>
+            <div class="number-form-input">
+                <input type="number" placeholder="Price" min={0} bind:value={price} />
+                <span>zł</span>
+                <input type="number" placeholder="Surface area" min={0} bind:value={area} />
+                <span>m²</span>
+            </div>
+            <h3>Location</h3>
+            <h4>City is required, other fields are recommended</h4>
+            <div>
+                <input type="text" placeholder="City" required={true} bind:value={city} />
+                <input type="text" placeholder="Street name" bind:value={streetName} />
+                <input type="text" placeholder="House number" bind:value={houseNumber} />
+                <input type="text" placeholder="Apartment number" bind:value={apartmentNumber} />
+            </div>
+            <h3>Photos</h3>
+            <h4>Attach photos here</h4>
+            <label for="file-upload" class="file-upload-label">Upload</label>
+            <input id="file-upload" type="file" name="Photos" accept="image/*" multiple={true} bind:this={fileInput} on:change={handleFileInput} />
+            <div class="photos-container">
+                {#each photos as file}
+                    <div class="photo-container">
+                        <img class="photo" src={URL.createObjectURL(file)} alt={''} />
+                        <img
+                            class="photo-close-btn"
+                            src="/assets/plus-icon.svg"
+                            alt=""
+                            on:click={() => handleFileRemove(file)}
+                            on:keypress={() => handleFileRemove(file)}
+                        />
+                    </div>
+                {/each}
+            </div>
+            {#if error}
+                <p>There was an error:</p>
+                <pre>{error}</pre>
+            {/if}
+            <input type="submit" value="Create" disabled={isLoading || title.length === 0 || city.length === 0} />
+        </form>
+    {:else}
+        <h3>You need to be signed in to add an offer</h3>
+        <a class="login-link" href="/login">Sign in</a>
+    {/if}
+</div>
 
 <style lang="scss">
     .inner-container {
@@ -102,7 +175,7 @@
             width: 5px;
         }
     }
-    input[type=submit] {
+    input[type='submit'] {
         color: whitesmoke;
         background-color: var(--cta);
         padding: 9px 30px;
@@ -118,7 +191,7 @@
         margin-top: 0px;
         margin-bottom: 10px;
     }
-    input[type=file] {
+    input[type='file'] {
         display: none;
     }
     .file-upload-label {
@@ -135,9 +208,9 @@
         .photo-container {
             position: relative;
             .photo {
-            margin: 3px;
-            width: 250px;
-            height: 150px;
+                margin: 3px;
+                width: 250px;
+                height: 150px;
             }
             .photo-close-btn {
                 display: none;
@@ -165,70 +238,3 @@
         }
     }
 </style>
-
-<svelte:head>
-    <title>New offer | {SITE_TITLE}</title>
-</svelte:head>
-
-<div class="inner-container">
-    <h2>Create an offer</h2>
-    {#if $userStore.user}
-    <form on:submit|preventDefault={handleSubmit}>
-        <h3>Title and description</h3>
-        <h4>Title is required, it is highly recommended to add a description</h4>
-        <input type="text" placeholder="Title" required={true} bind:value={title}>
-        <textarea placeholder="Description" bind:value={description}></textarea>
-        <h3>Category</h3>
-        <h4>Select category and type of your offer</h4>
-        <div class="select-container">
-            <select bind:value={category}>
-                {#each OFFER_CATEGORIES as {label, value}}
-                    <option value={value}>{label}</option>
-                {/each}
-            </select>
-            <span></span>
-            <select bind:value={type}>
-                {#each OFFER_TYPES as {label, value}}
-                    <option value={value}>{label}</option>
-                {/each}
-            </select>
-        </div>
-        <h3>Parameters</h3>
-        <h4>Setting these will help users see your offers</h4>
-        <div class="number-form-input">
-            <input type="number" placeholder="Price" min={0} bind:value={price}>
-            <span>zł</span>
-            <input type="number" placeholder="Surface area" min={0} bind:value={area}>
-            <span>m²</span>
-        </div>
-        <h3>Location</h3>
-        <h4>City is required, other fields are recommended</h4>
-        <div>
-            <input type="text" placeholder="City" required={true} bind:value={city}>
-            <input type="text" placeholder="Street name" bind:value={streetName}>
-            <input type="text" placeholder="House number" bind:value={houseNumber}>
-            <input type="text" placeholder="Apartment number" bind:value={apartmentNumber}>
-        </div>
-        <h3>Photos</h3>
-        <h4>Attach photos here</h4>
-        <label for="file-upload" class="file-upload-label">Upload</label>
-        <input id="file-upload" type="file" name="Photos" accept="image/*" multiple={true} bind:this={fileInput} on:change={handleFileInput}>
-        <div class="photos-container">
-            {#each photos as file}
-                <div class="photo-container">
-                    <img class="photo" src={URL.createObjectURL(file)} alt={''}>
-                    <img class="photo-close-btn" src="/assets/plus-icon.svg" alt="" on:click={()=>handleFileRemove(file)} on:keypress={()=>handleFileRemove(file)}>
-                </div>
-            {/each}
-        </div>
-        {#if error}
-            <p>There was an error: </p>
-            <pre>{error}</pre>
-        {/if}
-        <input type="submit" value="Create" disabled={isLoading || title.length === 0 || city.length === 0}>
-    </form>
-    {:else}
-        <h3>You need to be signed in to add an offer</h3>
-        <a class="login-link" href="/login">Sign in</a>
-    {/if}
-</div>

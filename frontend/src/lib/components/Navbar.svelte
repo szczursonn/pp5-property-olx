@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { goto } from "$app/navigation";
-    import { BASE_URL, logout } from "$lib/api";
-    import clickOutside from "$lib/clickOutside";
-    import { NO_IMAGE_PHOTO, SITE_TITLE } from "$lib/constants";
-    import { userStore } from "$lib/stores/user";
-    import LoadingSpinner from "./LoadingSpinner.svelte";
+    import { goto } from '$app/navigation'
+    import { BASE_URL, logout } from '$lib/api'
+    import clickOutside from '$lib/clickOutside'
+    import { NO_IMAGE_PHOTO, SITE_TITLE } from '$lib/constants'
+    import { userStore } from '$lib/stores/user'
+    import LoadingSpinner from './LoadingSpinner.svelte'
     import options from './NavbarData'
-    
+
     let selectedIndex = -1
     let isMyAccountSelected = false
     let isDrawerOpened = false
@@ -14,13 +14,12 @@
     const onOptionSelect = (newSelectedIndex: number) => {
         if (selectedIndex === newSelectedIndex) {
             selectedIndex = -1
-        }
-        else {
+        } else {
             selectedIndex = newSelectedIndex
         }
     }
 
-    const openDrawer = () => isDrawerOpened = true
+    const openDrawer = () => (isDrawerOpened = true)
     const closeDrawer = () => {
         selectedIndex = -1
         isMyAccountSelected = false
@@ -38,14 +37,79 @@
         await logout()
         window.location.reload()
     }
-
 </script>
+
+<header use:clickOutside={closeDrawer}>
+    <nav>
+        <a class="site-title" href="/">
+            {SITE_TITLE}
+        </a>
+        <div class="navbar-options-container" class:drawer-opened={isDrawerOpened}>
+            <img class="drawer-close-btn" src="/assets/plus-icon.svg" alt="Plus icon" on:click={closeDrawer} on:keypress={closeDrawer} />
+            <ul class="navbar-dropdowns-container" use:clickOutside={() => onOptionSelect(-1)}>
+                {#each options as option, i}
+                    <li data-sveltekit-preload-data={option.shouldPreload ? 'hover' : 'tap'} class="navbar-dropdown" class:selected={i === selectedIndex}>
+                        {#if 'url' in option}
+                            <a class="navbar-dropdown-text" href={option.url} on:click={closeDrawer}>{option.name}</a>
+                        {:else}
+                            <p class="navbar-dropdown-text" on:click={() => onOptionSelect(i)} on:keypress={() => onOptionSelect(i)}>
+                                {option.name}
+                                <span class="list-triangle-icon" class:selected={i === selectedIndex} />
+                            </p>
+                            <ul class="navbar-dropdown-items-container" class:visible={i === selectedIndex}>
+                                {#each option.suboptions as suboption}
+                                    <li class="navbar-dropdown-item">
+                                        <a class="navbar-dropdown-item-text" href={suboption.url} on:click={closeDrawer}>{suboption.name}</a>
+                                    </li>
+                                {/each}
+                            </ul>
+                        {/if}
+                    </li>
+                {/each}
+            </ul>
+            <hr />
+            <div class="my-account-btn-container">
+                <a class="my-account-btn" href="/login" on:click|preventDefault={handleMyAccountClick} use:clickOutside={() => (isMyAccountSelected = false)}>
+                    {#if $userStore.loading}
+                        <LoadingSpinner />
+                    {:else}
+                        <img src="/assets/user-profile-icon.svg" alt="User profile icon" />
+                        <div>My account</div>
+                    {/if}
+                </a>
+                <ul class="navbar-dropdown-items-container" class:visible={isMyAccountSelected}>
+                    <li class="navbar-dropdown-item account-dropdown-item">
+                        <img class="user-avatar" src={$userStore.user?.avatar ?? NO_IMAGE_PHOTO.url} alt={`${$userStore.user?.username}'s avatar'`} />
+                        <a class="account-username" href={`/users/${$userStore.user?.id}`}>{$userStore.user?.username}</a>
+                        <p class="account-email">{$userStore.user?.email}</p>
+                    </li>
+                    {#if $userStore?.user?.isStaff}
+                        <li class="navbar-dropdown-item">
+                            <a class="navbar-dropdown-item-text" href={`${BASE_URL}/admin`}>Admin panel</a>
+                        </li>
+                    {/if}
+                    <li class="navbar-dropdown-item">
+                        <p class="navbar-dropdown-item-text" on:click={handleLogout} on:keypress={handleLogout}>Logout</p>
+                    </li>
+                </ul>
+            </div>
+            <hr />
+            <a class="add-offer-btn" href="/offers/new" on:click={closeDrawer}>
+                <div>Add offer</div>
+                <img src="/assets/plus-icon.svg" alt="Plus icon" />
+            </a>
+        </div>
+        <div class="drawer-open-btn-container" on:click={openDrawer} on:keypress={openDrawer}>
+            <img class="drawer-open-btn" src="/assets/drawer-icon.svg" alt="Drawer open icon" />
+        </div>
+    </nav>
+</header>
 
 <style lang="scss">
     $breakpoint-icons: 1050px;
     $breakpoint-drawer: 600px;
     $navbar-height: 60px;
-    
+
     header {
         position: sticky;
         top: 0px;
@@ -80,12 +144,13 @@
     .navbar-dropdown {
         position: relative;
         transition: backdrop-filter 250ms;
-        &:hover, &:focus {
+        &:hover,
+        &:focus {
             cursor: pointer;
-            backdrop-filter: brightness(120%)
+            backdrop-filter: brightness(120%);
         }
         &.selected {
-            backdrop-filter: brightness(90%)
+            backdrop-filter: brightness(90%);
         }
     }
     .navbar-dropdown-text {
@@ -122,7 +187,7 @@
         text-transform: uppercase;
         white-space: nowrap;
     }
-    
+
     .my-account-btn {
         display: flex;
         align-items: center;
@@ -131,7 +196,8 @@
         transition: backdrop-filter 250ms;
         padding-left: 10px;
         padding-right: 10px;
-        &:hover, &:focus {
+        &:hover,
+        &:focus {
             cursor: pointer;
             backdrop-filter: brightness(120%);
         }
@@ -151,7 +217,8 @@
         margin-left: 20px;
         background-color: var(--cta);
         transition: filter 250ms;
-        &:hover, &:focus {
+        &:hover,
+        &:focus {
             cursor: pointer;
             filter: brightness(120%);
         }
@@ -246,7 +313,8 @@
         .navbar-dropdown {
             align-self: flex-start;
             width: 100%;
-            &:hover, &:focus {
+            &:hover,
+            &:focus {
                 background-color: inherit;
             }
             &.selected {
@@ -284,7 +352,7 @@
             margin: 0;
         }
     }
-    
+
     .list-triangle-icon {
         display: inline-block;
         width: 0;
@@ -307,69 +375,3 @@
         border-radius: 50%;
     }
 </style>
-
-<header use:clickOutside={closeDrawer}>
-    <nav>
-        <a class="site-title" href="/">
-            {SITE_TITLE}
-        </a>
-        <div class="navbar-options-container" class:drawer-opened={isDrawerOpened}>
-            <img class="drawer-close-btn" src="/assets/plus-icon.svg" alt="Plus icon" on:click={closeDrawer} on:keypress={closeDrawer}>
-            <ul class="navbar-dropdowns-container" use:clickOutside={()=>onOptionSelect(-1)}>
-                {#each options as option, i}
-                    <li data-sveltekit-preload-data={option.shouldPreload ? 'hover' : 'tap'} class="navbar-dropdown" class:selected={i===selectedIndex}>
-                        {#if 'url' in option}
-                            <a class="navbar-dropdown-text" href={option.url} on:click={closeDrawer}>{option.name}</a>
-                        {:else}
-                            <p class="navbar-dropdown-text" on:click={()=>onOptionSelect(i)} on:keypress={()=>onOptionSelect(i)}>
-                                {option.name}
-                                <span class="list-triangle-icon" class:selected={i===selectedIndex}></span>
-                            </p>
-                                <ul class="navbar-dropdown-items-container" class:visible={i===selectedIndex}>
-                                    {#each option.suboptions as suboption}
-                                        <li class="navbar-dropdown-item">
-                                            <a class="navbar-dropdown-item-text" href={suboption.url} on:click={closeDrawer}>{suboption.name}</a>
-                                        </li>
-                                    {/each}
-                                </ul>
-                        {/if}
-                    </li>
-                {/each}
-            </ul>
-            <hr />
-            <div class="my-account-btn-container">
-                <a class="my-account-btn" href="/login" on:click|preventDefault={handleMyAccountClick} use:clickOutside={()=>isMyAccountSelected=false}>
-                    {#if $userStore.loading}
-                        <LoadingSpinner></LoadingSpinner>
-                    {:else}
-                        <img src='/assets/user-profile-icon.svg' alt="User profile icon">
-                        <div>My account</div>
-                    {/if}
-                </a>
-                <ul class="navbar-dropdown-items-container" class:visible={isMyAccountSelected}>
-                    <li class="navbar-dropdown-item account-dropdown-item">
-                        <img class="user-avatar" src={$userStore.user?.avatar ?? NO_IMAGE_PHOTO.url} alt={`${$userStore.user?.username}'s avatar'`}>
-                        <a class="account-username" href={`/users/${$userStore.user?.id}`}>{$userStore.user?.username}</a>
-                        <p class="account-email">{$userStore.user?.email}</p>
-                    </li>
-                    {#if $userStore?.user?.isStaff}
-                        <li class="navbar-dropdown-item">
-                            <a class="navbar-dropdown-item-text" href={`${BASE_URL}/admin`}>Admin panel</a>
-                        </li>
-                    {/if}
-                    <li class="navbar-dropdown-item">
-                        <p class="navbar-dropdown-item-text" on:click={handleLogout} on:keypress={handleLogout}>Logout</p>
-                    </li>
-                </ul>
-            </div>
-            <hr />
-            <a class="add-offer-btn" href="/offers/new" on:click={closeDrawer}>
-                <div>Add offer</div>
-                <img src="/assets/plus-icon.svg" alt="Plus icon">
-            </a>
-        </div>
-        <div class="drawer-open-btn-container" on:click={openDrawer} on:keypress={openDrawer}>
-            <img class="drawer-open-btn" src="/assets/drawer-icon.svg" alt="Drawer open icon">
-        </div>
-    </nav>
-</header>

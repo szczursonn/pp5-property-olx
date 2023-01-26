@@ -1,21 +1,21 @@
 <script lang="ts">
-    import { NO_IMAGE_PHOTO, SITE_TITLE } from "$lib/constants";
-    import type { PageData } from "./$types";
-    import { getLocationString } from "$lib/getLocationString";
-    import { onDestroy } from "svelte";
-    import { userStore } from "$lib/stores/user";
-    import Map from "$lib/components/Map.svelte";
-    import { changeOfferStatus } from "$lib/api";
-    import { errorStore } from "$lib/stores/error";
-    import { invalidate } from "$app/navigation";
+    import { NO_IMAGE_PHOTO, SITE_TITLE } from '$lib/constants'
+    import type { PageData } from './$types'
+    import { getLocationString } from '$lib/getLocationString'
+    import { onDestroy } from 'svelte'
+    import { userStore } from '$lib/stores/user'
+    import Map from '$lib/components/Map.svelte'
+    import { changeOfferStatus } from '$lib/api'
+    import { errorStore } from '$lib/stores/error'
+    import { invalidate } from '$app/navigation'
 
     export let data: PageData
 
-    let photos = (data.offer && data.offer.photos.length > 0) ? data.offer.photos : [NO_IMAGE_PHOTO]
+    let photos = data.offer && data.offer.photos.length > 0 ? data.offer.photos : [NO_IMAGE_PHOTO]
     let selectedPhotoIndex = 0
 
     let isOwnedByCurrentUser = false
-    onDestroy(userStore.subscribe((store)=>isOwnedByCurrentUser=data.offer?.authorId === store.user?.id))
+    onDestroy(userStore.subscribe((store) => (isOwnedByCurrentUser = data.offer?.authorId === store.user?.id)))
 
     let isDeactivationModalOpened = false
     const openDeactivationModal = () => {
@@ -30,7 +30,7 @@
         isChangingStatus = true
         try {
             await changeOfferStatus(data.offer?.id!, 0)
-            await invalidate(()=>true)
+            await invalidate(() => true)
         } catch (err) {
             console.error(err)
             $errorStore.addError('Failed to activate offer. Check console for details.')
@@ -43,15 +43,102 @@
         isChangingStatus = true
         try {
             await changeOfferStatus(data.offer?.id!, 1)
-            await invalidate(()=>true)
+            await invalidate(() => true)
         } catch (err) {
             console.error(err)
             $errorStore.addError('Failed to deactivate offer. Check console for details.')
         }
         isChangingStatus = false
     }
-
 </script>
+
+<svelte:head>
+    <title>{data.offer?.title ?? '404'} | {SITE_TITLE}</title>
+</svelte:head>
+
+<div class="master-container">
+    <div class="inner-container">
+        {#if data.offer && data.author}
+            <div>
+                <a class="back-button" href={globalThis?.document?.referrer} on:click|preventDefault={() => window.history.back()}>
+                    <img src="/assets/arrow.svg" alt="Back arrow icon" />
+                    Back
+                </a>
+            </div>
+            <div class="gallery-container">
+                <div class="photo">
+                    <div class="numbertext">{selectedPhotoIndex + 1} / {photos.length}</div>
+                    <img src={photos[selectedPhotoIndex].url} alt="Offer photo {photos[selectedPhotoIndex].id}" />
+                </div>
+                {#if selectedPhotoIndex > 0}
+                    <p class="prev" on:click={() => selectedPhotoIndex--} on:keypress={() => selectedPhotoIndex--}>❮</p>
+                {/if}
+                {#if selectedPhotoIndex < photos.length - 1}
+                    <p class="next" on:click={() => selectedPhotoIndex++} on:keypress={() => selectedPhotoIndex++}>❯</p>
+                {/if}
+            </div>
+            {#if isOwnedByCurrentUser || data.offer.status === 1}
+                <div class="activation-info-container" class:active={data.offer.status === 0}>
+                    <h3 class="header">Offer is {data.offer.status === 0 ? 'active' : 'inactive'}</h3>
+                    {#if data.offer.status === 0}
+                        <p>Offer will expire on {data.offer.activeUntil.toLocaleString()}</p>
+                    {:else}
+                        <p>Offer has been inactive since {data.offer.activeUntil.toLocaleString()}</p>
+                        <p>
+                            While the offer is inactive it will not show up in search results and on {isOwnedByCurrentUser
+                                ? 'your'
+                                : `${data.author.username}'s'`} profile.
+                        </p>
+                    {/if}
+                    {#if isOwnedByCurrentUser}
+                        <button
+                            class="activation-btn"
+                            on:click={data.offer.status === 0 ? openDeactivationModal : handleActivationButtonClick}
+                            disabled={isChangingStatus}
+                        >
+                            {data.offer.status === 0 ? 'Deactivate offer' : 'Reactivate offer'}
+                        </button>
+                    {/if}
+                </div>
+            {/if}
+            <div class="title-and-price">
+                <h3>{data.offer.title}</h3>
+                <h3>{data.offer.price ? `${data.offer.price} zł` : 'Ask for price'}</h3>
+            </div>
+            <p class="category-and-type">
+                {data.offer.categoryString} • {data.offer.typeString}{data.offer.squareMeters ? ` • ${data.offer.squareMeters} m²` : ''}
+            </p>
+            <h4 class="location-string"><img src="/assets/location-pin.svg" alt="" />{getLocationString(data.offer)}</h4>
+            <h3>Description</h3>
+            <p class="description">{data.offer.description || 'The author did not provide any description.'}</p>
+            <h3>Author</h3>
+            <div class="author-info-container">
+                <img src={data.author.avatar ?? NO_IMAGE_PHOTO.url} alt={`${data.author.username}'s avatar'`} />
+                <a href={`/users/${data.author.id}`}>{data.author.username}</a>
+            </div>
+            <h4>Contact info</h4>
+            <p class="contact-info">
+                <img class="contact-icon" src="/assets/mail-icon.svg" alt="Email" />
+                <a class="email-link" href={`mailto:${data.author.email}`}>{data.author.email}</a>
+            </p>
+            <p class="contact-info">
+                <img class="contact-icon" src="/assets/phone-icon.svg" alt="Phone number" />
+                {data.author.phoneNumber ?? 'Not provided'}
+            </p>
+            <h3>Map</h3>
+            <Map coords={[data.offer.location.lat, data.offer.location.lng]} />
+        {:else}
+            <h2>404</h2>
+        {/if}
+        <div class="deactivation-modal" class:show={isDeactivationModalOpened}>
+            <div class="content">
+                <p>Are you sure? Deactivating the offer will cause it to not show on your profile and in search results.</p>
+                <button on:click={handleDeactivateClick}>Yes</button>
+                <button on:click={closeDeactivationModal}>Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <style lang="scss">
     .master-container {
@@ -119,7 +206,7 @@
         border-radius: 0 3px 3px 0;
         user-select: none;
         &:hover {
-            background-color: rgba(0,0,0,0.8);
+            background-color: rgba(0, 0, 0, 0.8);
         }
     }
     .next {
@@ -161,7 +248,7 @@
             &:hover {
                 color: var(--cta);
             }
-        } 
+        }
     }
     .contact-icon {
         height: 25px;
@@ -225,7 +312,7 @@
         width: 100%;
         height: 100%;
         overflow: auto;
-        background-color: rgb(0,0,0, 0.4);
+        background-color: rgb(0, 0, 0, 0.4);
         &.show {
             display: block;
         }
@@ -241,83 +328,3 @@
         }
     }
 </style>
-
-<svelte:head>
-    <title>{data.offer?.title ?? '404'} | {SITE_TITLE}</title>
-</svelte:head>
-
-<div class="master-container">
-    <div class="inner-container">
-        {#if data.offer && data.author}
-            <div>
-                <a class="back-button" href={globalThis?.document?.referrer} on:click|preventDefault={()=>window.history.back()}>
-                    <img src="/assets/arrow.svg" alt="Back arrow icon">
-                    Back
-                </a>
-            </div>
-            <div class="gallery-container">
-                <div class="photo">
-                    <div class="numbertext">{selectedPhotoIndex+1} / {photos.length}</div>
-                    <img src={photos[selectedPhotoIndex].url} alt='Offer photo {photos[selectedPhotoIndex].id}'>
-                </div>
-                {#if selectedPhotoIndex > 0}
-                    <p class="prev" on:click={()=>selectedPhotoIndex--} on:keypress={()=>selectedPhotoIndex--}>❮</p>
-                {/if}
-                {#if selectedPhotoIndex < photos.length-1}
-                    <p class="next" on:click={()=>selectedPhotoIndex++} on:keypress={()=>selectedPhotoIndex++}>❯</p>
-                {/if}
-            </div>
-            {#if isOwnedByCurrentUser || data.offer.status === 1}
-                <div class="activation-info-container" class:active={data.offer.status === 0}>
-                    <h3 class="header">Offer is {data.offer.status === 0 ? 'active' : 'inactive'}</h3>
-                    {#if data.offer.status === 0}
-                    <p>Offer will expire on {data.offer.activeUntil.toLocaleString()}</p>
-                    {:else}
-                    <p>Offer has been inactive since {data.offer.activeUntil.toLocaleString()}</p>
-                    <p>While the offer is inactive it will not show up in search results and on {isOwnedByCurrentUser ? 'your' : `${data.author.username}'s'`} profile.</p>
-                    {/if}
-                    {#if isOwnedByCurrentUser}
-                    <button class="activation-btn" on:click={data.offer.status === 0 ? openDeactivationModal : handleActivationButtonClick} disabled={isChangingStatus}>
-                        {data.offer.status === 0 ? 'Deactivate offer' : 'Reactivate offer'}
-                    </button>
-                    {/if}
-                </div>
-            {/if}
-            <div class="title-and-price">
-                <h3>{data.offer.title}</h3>
-                <h3>{data.offer.price ? `${data.offer.price} zł` : 'Ask for price'}</h3>
-            </div>
-            <p class="category-and-type">
-                {data.offer.categoryString} • {data.offer.typeString}{data.offer.squareMeters ? ` • ${data.offer.squareMeters} m²` : ''}
-            </p>
-            <h4 class="location-string"><img src="/assets/location-pin.svg" alt="">{getLocationString(data.offer)}</h4>
-            <h3>Description</h3>
-            <p class="description">{data.offer.description || 'The author did not provide any description.'}</p>
-            <h3>Author</h3>
-            <div class="author-info-container">
-                <img src={data.author.avatar ?? NO_IMAGE_PHOTO.url} alt={`${data.author.username}'s avatar'`}>
-                <a href={`/users/${data.author.id}`}>{data.author.username}</a>
-            </div>
-            <h4>Contact info</h4>
-            <p class="contact-info">
-                <img class="contact-icon" src="/assets/mail-icon.svg" alt="Email">
-                <a class="email-link" href={`mailto:${data.author.email}`}>{data.author.email}</a>
-            </p>
-            <p class="contact-info">
-                <img class="contact-icon" src="/assets/phone-icon.svg" alt="Phone number">
-                {data.author.phoneNumber ?? 'Not provided'}
-            </p>
-            <h3>Map</h3>
-            <Map coords={[data.offer.location.lat, data.offer.location.lng]} />
-        {:else}
-            <h2>404</h2>
-        {/if}
-        <div class="deactivation-modal" class:show={isDeactivationModalOpened}>
-            <div class="content">
-                <p>Are you sure? Deactivating the offer will cause it to not show on your profile and in search results.</p>
-                <button on:click={handleDeactivateClick}>Yes</button>
-                <button on:click={closeDeactivationModal}>Cancel</button>
-            </div>
-        </div>
-    </div>
-</div>

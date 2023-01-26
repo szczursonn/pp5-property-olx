@@ -1,6 +1,6 @@
-import { browser } from "$app/environment"
-import { env } from "$env/dynamic/public";
-import { validateOffer, validateOffers, validateUser, type Offer, type User } from "./types"
+import { browser } from '$app/environment'
+import { env } from '$env/dynamic/public'
+import { validateOffer, validateOffers, validateUser, type Offer, type User } from './types'
 
 export const BASE_URL = env.PUBLIC_API_URL
 // SSR fetch resolves localhost to [::1] which doesnt work with django instead of 127.0.0.1, stupid
@@ -10,19 +10,24 @@ export const BASE_URL = env.PUBLIC_API_URL
 /* Helper functions */
 
 const getCookie = (name: string) => {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    if (parts.length === 2) return parts.pop()!.split(';').shift();
+    const value = `; ${document.cookie}`
+    const parts = value.split(`; ${name}=`)
+    if (parts.length === 2) return parts.pop()!.split(';').shift()
 }
 
-const authedFetch = async ({url, method, jsonBody, formData, fetchFn}: {
-    url: string,
-    method: 'GET'|'POST'|'PATCH'|'PUT'|'DELETE',
-    jsonBody?: string,
+const authedFetch = async ({
+    url,
+    method,
+    jsonBody,
+    formData,
+    fetchFn,
+}: {
+    url: string
+    method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE'
+    jsonBody?: string
     formData?: FormData
     fetchFn?: typeof fetch
 }) => {
-
     if (!fetchFn) fetchFn = fetch
 
     const headers: HeadersInit = {}
@@ -31,39 +36,37 @@ const authedFetch = async ({url, method, jsonBody, formData, fetchFn}: {
     }
     if (browser) {
         const csrfToken = getCookie('csrftoken')
-        if (csrfToken) headers['X-CSRFToken']=csrfToken
+        if (csrfToken) headers['X-CSRFToken'] = csrfToken
     }
 
     const fetchBaseUrl = (browser ? env.PUBLIC_API_URL : env.PUBLIC_API_URL__SERVER)!
 
-    const res = await fetchFn(`${BASE_URL}/api${url}`, {
+    const res = await fetchFn(`${fetchBaseUrl}/api${url}`, {
         credentials: 'include',
         method,
         body: jsonBody || formData,
-        headers
+        headers,
     })
 
     let data: any = undefined
     try {
         data = await res.json()
-    } catch (err) {
-
-    }
+    } catch (err) {}
 
     return {
         status: res.status,
         ok: res.ok,
-        data
+        data,
     }
 }
 
 /* Users */
 
-export const fetchUser = async (userId: number|'me', fetchFn?: typeof fetch): Promise<User|null> => {
+export const fetchUser = async (userId: number | 'me', fetchFn?: typeof fetch): Promise<User | null> => {
     const { status, ok, data } = await authedFetch({
         url: `/users/${userId}`,
         method: 'GET',
-        fetchFn
+        fetchFn,
     })
     if (status === 404) return null
     if (!ok) throw new Error(JSON.stringify(data))
@@ -79,24 +82,22 @@ export const changeUsername = async (username: string): Promise<User> => {
     const { ok, data } = await authedFetch({
         url: '/users/me/username/',
         method: 'PATCH',
-        jsonBody: JSON.stringify({username})
+        jsonBody: JSON.stringify({ username }),
     })
 
     if (!ok) throw new Error(JSON.stringify(data))
 
     return validateUser(data)
-
 }
 
-export const changeAvatar = async (file: File|null) => {
-
+export const changeAvatar = async (file: File | null) => {
     const payload = new FormData()
     if (file) payload.append('avatar', file, file.name)
 
     const { ok, data } = await authedFetch({
         url: '/users/me/avatar/',
         method: file ? 'PATCH' : 'DELETE',
-        formData: file ? payload : undefined
+        formData: file ? payload : undefined,
     })
 
     if (!ok) throw new Error(JSON.stringify(data))
@@ -110,7 +111,7 @@ export const login = async (email: string, password: string): Promise<void> => {
     const { ok, data } = await authedFetch({
         url: '/auth/login/',
         method: 'POST',
-        jsonBody: JSON.stringify({email, password})
+        jsonBody: JSON.stringify({ email, password }),
     })
     if (!ok) {
         throw new Error(JSON.stringify(data))
@@ -120,16 +121,16 @@ export const login = async (email: string, password: string): Promise<void> => {
 export const logout = async () => {
     const { ok, data } = await authedFetch({
         url: '/auth/logout/',
-        method: 'POST'
+        method: 'POST',
     })
     if (!ok) throw new Error(JSON.stringify(data))
 }
 
-export const register = async ({email, password, username, phoneNumber}: {email: string, password: string, username?: string, phoneNumber?: string}) => {
+export const register = async ({ email, password, username, phoneNumber }: { email: string; password: string; username?: string; phoneNumber?: string }) => {
     const { ok, data } = await authedFetch({
         url: '/auth/register/',
         method: 'POST',
-        jsonBody: JSON.stringify({email, password, username, phoneNumber})
+        jsonBody: JSON.stringify({ email, password, username, phoneNumber }),
     })
     if (!ok) throw new Error(JSON.stringify(data))
 }
@@ -140,37 +141,48 @@ export const fetchOffers = async (params: URLSearchParams, fetchFn: typeof fetch
     const { data } = await authedFetch({
         url: `/offers/?${params.toString()}`,
         method: 'GET',
-        fetchFn
+        fetchFn,
     })
 
     return validateOffers(data)
 }
 
-export const fetchOffer = async (offerId: string, fetchFn: typeof fetch): Promise<Offer|null> => {
+export const fetchOffer = async (offerId: string, fetchFn: typeof fetch): Promise<Offer | null> => {
     const { status, data } = await authedFetch({
         url: `/offers/${offerId}`,
         method: 'GET',
-        fetchFn
+        fetchFn,
     })
     if (status === 404) return null
-    
+
     return validateOffer(data)
 }
 
-export const createOffer = async ({title, description, category, type, squareMeters, price, cityName, streetName, houseNumber, apartmentNumber, photos}: {
-    title: string,
-    description?: string,
-    category: number,
-    type: number,
-    squareMeters?: number,
-    price?: number,
-    cityName: string,
-    streetName?: string,
-    houseNumber?: string,
-    apartmentNumber?: string,
+export const createOffer = async ({
+    title,
+    description,
+    category,
+    type,
+    squareMeters,
+    price,
+    cityName,
+    streetName,
+    houseNumber,
+    apartmentNumber,
+    photos,
+}: {
+    title: string
+    description?: string
+    category: number
+    type: number
+    squareMeters?: number
+    price?: number
+    cityName: string
+    streetName?: string
+    houseNumber?: string
+    apartmentNumber?: string
     photos: File[]
 }) => {
-
     const payload = new FormData()
     payload.append('title', title)
     if (description) payload.append('description', description)
@@ -189,7 +201,7 @@ export const createOffer = async ({title, description, category, type, squareMet
     const { ok, data } = await authedFetch({
         url: '/offers/',
         method: 'POST',
-        formData: payload
+        formData: payload,
     })
     if (!ok) throw new Error(JSON.stringify(data))
     if (typeof data === 'object' && typeof data.id === 'number') {
@@ -201,10 +213,10 @@ export const createOffer = async ({title, description, category, type, squareMet
 export const getRandomOffers = async () => {
     const { ok, data } = await authedFetch({
         url: '/offers/suggested',
-        method: 'GET'
+        method: 'GET',
     })
     if (!ok) throw new Error(JSON.stringify(data))
-    
+
     return validateOffers(data)
 }
 
@@ -212,7 +224,7 @@ export const changeOfferStatus = async (offerId: number, newStatus: 0 | 1) => {
     const { ok, data } = await authedFetch({
         url: `/offers/${offerId}/status`,
         method: 'PATCH',
-        jsonBody: JSON.stringify({status: newStatus})
+        jsonBody: JSON.stringify({ status: newStatus }),
     })
     if (!ok) throw new Error(JSON.stringify(data))
 

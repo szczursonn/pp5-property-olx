@@ -1,6 +1,13 @@
 <script lang="ts">
-    import { GITHUB_REPO_URL, SITE_TITLE } from "$lib/constants";
+    import { GITHUB_REPO_URL, SITE_TITLE } from '$lib/constants'
 </script>
+
+<footer>
+    <p>{SITE_TITLE.toUpperCase()}</p>
+    <a href={GITHUB_REPO_URL}>
+        <img src="/assets/github-mark.svg" alt="Github icon" />
+    </a>
+</footer>
 
 <style lang="scss">
     $footer-height: 120px;
@@ -23,10 +30,3 @@
         }
     }
 </style>
-
-<footer>
-    <p>{SITE_TITLE.toUpperCase()}</p>
-    <a href={GITHUB_REPO_URL}>
-        <img src="/assets/github-mark.svg" alt="Github icon">
-    </a>
-</footer>

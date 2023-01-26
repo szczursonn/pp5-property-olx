@@ -1,13 +1,13 @@
 <script lang="ts">
-    import { goto } from "$app/navigation";
-    import { getRandomOffers } from "$lib/api";
-    import OfferBrowserFilterForm from "$lib/components/OfferBrowserFilterForm.svelte";
-    import OfferGrid from "$lib/components/OfferGrid.svelte";
-    import { SITE_TITLE } from "$lib/constants";
-    import type { Offer } from "$lib/types";
-    import { onMount } from "svelte";
-    import type { PageData } from "./$types";
-    
+    import { goto } from '$app/navigation'
+    import { getRandomOffers } from '$lib/api'
+    import OfferBrowserFilterForm from '$lib/components/OfferBrowserFilterForm.svelte'
+    import OfferGrid from '$lib/components/OfferGrid.svelte'
+    import { SITE_TITLE } from '$lib/constants'
+    import type { Offer } from '$lib/types'
+    import { onMount } from 'svelte'
+    import type { PageData } from './$types'
+
     const handleSubmit = (filter: URLSearchParams) => {
         goto(`/offers?${filter.toString()}`)
     }
@@ -16,7 +16,7 @@
         offers = await getRandomOffers()
     })
 
-    let offers: Offer[]|undefined
+    let offers: Offer[] | undefined
 
     export let data: PageData
 </script>
@@ -24,6 +24,19 @@
 <svelte:head>
     <title>{SITE_TITLE}</title>
 </svelte:head>
+
+<div class="search-container" style="background-image: url(/assets/bg-slideshow-{data.backgroundImageId}.jpg);">
+    <h1>{SITE_TITLE}</h1>
+    <p>find a cool house maybe idk</p>
+    <OfferBrowserFilterForm onSubmit={handleSubmit} />
+</div>
+
+{#if offers}
+    <div class="suggested-container">
+        <h2>Check out these offers</h2>
+        <OfferGrid {offers} />
+    </div>
+{/if}
 
 <style lang="scss">
     .search-container {
@@ -53,16 +66,3 @@
         margin-right: auto;
     }
 </style>
-
-<div class="search-container" style="background-image: url(/assets/bg-slideshow-{data.backgroundImageId}.jpg);">
-    <h1>{SITE_TITLE}</h1>
-    <p>find a cool house maybe idk</p>
-    <OfferBrowserFilterForm onSubmit={handleSubmit} />
-</div>
-
-{#if offers}
-<div class="suggested-container">
-    <h2>Check out these offers</h2>
-    <OfferGrid offers={offers}></OfferGrid>
-</div>
-{/if}

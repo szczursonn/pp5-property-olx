@@ -1,11 +1,27 @@
 <script lang="ts">
-    import { NO_IMAGE_PHOTO } from "$lib/constants";
-    import { getLocationString } from "$lib/getLocationString";
-    import type { Offer } from "$lib/types";
+    import { NO_IMAGE_PHOTO } from '$lib/constants'
+    import { getLocationString } from '$lib/getLocationString'
+    import type { Offer } from '$lib/types'
 
     export let offers: Offer[]
-
 </script>
+
+<div class="offers-container">
+    {#each offers as offer}
+        <a class="card" href={`/offers/${offer.id}`}>
+            <img class="photo" src={offer.photos.length > 0 ? offer.photos[0].url : NO_IMAGE_PHOTO.url} alt="" />
+            <div>
+                <div>
+                    <p class="price">{offer.price ? `${offer.price} zł` : 'Ask for price'}</p>
+                    {#if offer.status === 1}
+                        <p class="inactive">INACTIVE</p>
+                    {/if}
+                </div>
+                <p class="info-lower">{getLocationString(offer)}</p>
+            </div>
+        </a>
+    {/each}
+</div>
 
 <style lang="scss">
     .offers-container {
@@ -35,7 +51,7 @@
         box-shadow: 0px 0px 10px rgba(128, 128, 128, 0.5);
         transition: background-color 250ms;
         &:hover {
-            background-color:antiquewhite;
+            background-color: antiquewhite;
         }
     }
     .photo {
@@ -61,20 +77,3 @@
         margin-bottom: 5px;
     }
 </style>
-
-<div class="offers-container">
-    {#each offers as offer}
-        <a class="card" href={`/offers/${offer.id}`}>
-            <img class="photo" src={offer.photos.length > 0 ? offer.photos[0].url : NO_IMAGE_PHOTO.url} alt="">
-            <div>
-                <div>
-                    <p class="price">{offer.price ? `${offer.price} zł` : 'Ask for price'}</p>
-                    {#if offer.status === 1}
-                        <p class="inactive">INACTIVE</p>
-                    {/if}
-                </div>
-                <p class="info-lower">{getLocationString(offer)}</p>
-            </div>
-        </a>
-    {/each}
-</div>

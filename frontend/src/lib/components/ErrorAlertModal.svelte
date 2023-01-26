@@ -1,11 +1,20 @@
 <script lang="ts">
-    import { errorStore } from "$lib/stores/error";
+    import { errorStore } from '$lib/stores/error'
 
     const handleClose = () => {
         $errorStore.clearErrors()
     }
-    
 </script>
+
+<div class="modal" class:show={$errorStore.errors.length > 0}>
+    <div class="modal-content">
+        <span class="close-btn" on:click={handleClose} on:keypress={handleClose}>×</span>
+        <h3>{$errorStore.errors.length > 1 ? `There were ${$errorStore.errors.length} errors:` : 'There was an error: '}</h3>
+        {#each $errorStore.errors as error, i}
+            <p class="error">{$errorStore.errors.length > 1 ? `${i + 1}. ` : ''}{error}</p>
+        {/each}
+    </div>
+</div>
 
 <style lang="scss">
     .modal {
@@ -17,8 +26,8 @@
         width: 100%;
         height: 100%;
         overflow: auto;
-        background-color: rgb(0,0,0);
-        background-color: rgba(0,0,0,0.4);
+        background-color: rgb(0, 0, 0);
+        background-color: rgba(0, 0, 0, 0.4);
         &.show {
             display: block;
         }
@@ -39,21 +48,11 @@
         float: right;
         font-size: 28px;
         font-weight: bold;
-        &:hover, &:focus {
+        &:hover,
+        &:focus {
             color: black;
             text-decoration: none;
             cursor: pointer;
         }
     }
-
 </style>
-
-<div class="modal" class:show={$errorStore.errors.length>0}>
-    <div class="modal-content">
-        <span class="close-btn" on:click={handleClose} on:keypress={handleClose}>×</span>
-        <h3>{$errorStore.errors.length>1 ? `There were ${$errorStore.errors.length} errors:` : 'There was an error: '}</h3>
-        {#each $errorStore.errors as error, i}
-            <p class="error">{$errorStore.errors.length>1 ? `${i+1}. ` : ''}{error}</p>
-        {/each}
-    </div>
-</div>

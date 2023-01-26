@@ -1,9 +1,34 @@
 <script lang="ts">
-    import { NO_IMAGE_PHOTO } from "$lib/constants";
-    import type { Offer } from "$lib/types";
+    import { NO_IMAGE_PHOTO } from '$lib/constants'
+    import type { Offer } from '$lib/types'
 
     export let offers: Offer[]
 </script>
+
+<div class="offers-list">
+    {#each offers as offer}
+        <a href={`/offers/${offer.id}`}>
+            <div class="card">
+                <img class="card-image" src={offer.photos.length > 0 ? offer.photos[0].url : NO_IMAGE_PHOTO.url} alt="" />
+                <div class="card-content">
+                    <div>
+                        <p class="card-header">{offer.title}</p>
+                        <div>
+                            <p class="price">{offer.price ? `${offer.price} zł` : 'Ask for price'}</p>
+                            {#if offer.price && offer.squareMeters}
+                                <p class="area-price-ratio">{(offer.price / offer.squareMeters).toFixed(2).replace('.', ',')} zł/m²</p>
+                            {/if}
+                            {#if offer.squareMeters}
+                                <p class="area">{offer.squareMeters.toFixed(2).replace('.', ',')} m²</p>
+                            {/if}
+                        </div>
+                    </div>
+                    <p class="card-footer">{offer.location.city} - Added {offer.createdAt.toLocaleDateString()}</p>
+                </div>
+            </div>
+        </a>
+    {/each}
+</div>
 
 <style lang="scss">
     .offers-list {
@@ -82,28 +107,3 @@
         }
     }
 </style>
-
-<div class="offers-list">
-    {#each offers as offer}
-    <a href={`/offers/${offer.id}`}>
-        <div class="card">
-            <img class="card-image" src={offer.photos.length > 0 ? offer.photos[0].url : NO_IMAGE_PHOTO.url} alt="">
-            <div class="card-content">
-                <div>
-                    <p class="card-header">{offer.title}</p>
-                    <div>
-                        <p class="price">{offer.price ? `${offer.price} zł` : 'Ask for price'}</p>
-                        {#if offer.price && offer.squareMeters}
-                            <p class="area-price-ratio">{(offer.price/offer.squareMeters).toFixed(2).replace('.',',')} zł/m²</p>
-                        {/if}
-                        {#if offer.squareMeters}
-                            <p class="area">{offer.squareMeters.toFixed(2).replace('.',',')} m²</p>
-                        {/if}
-                    </div>
-                </div>
-                <p class="card-footer">{offer.location.city} - Added {offer.createdAt.toLocaleDateString()}</p>
-            </div>
-        </div>
-    </a>
-    {/each}
-</div>

@@ -1,5 +1,5 @@
-import { BASE_URL } from "./api"
-import { OFFER_CATEGORIES, OFFER_STATUSES, OFFER_TYPES } from "./constants"
+import { BASE_URL } from './api'
+import { OFFER_CATEGORIES, OFFER_STATUSES, OFFER_TYPES } from './constants'
 
 export class ValidationError extends Error {
     constructor(public object: 'user' | 'offer') {
@@ -9,12 +9,12 @@ export class ValidationError extends Error {
 }
 
 export type User = {
-    id: number,
-    username: string,
-    email: string,
-    phoneNumber: string|null,
-    isStaff: boolean,
-    avatar: string|null
+    id: number
+    username: string
+    email: string
+    phoneNumber: string | null
+    isStaff: boolean
+    avatar: string | null
 }
 
 export const validateUser = (data: any): User => {
@@ -37,38 +37,38 @@ export const validateUser = (data: any): User => {
             email: data.email,
             phoneNumber: data.phone_number,
             isStaff: data.is_staff,
-            avatar: data.avatar
+            avatar: data.avatar,
         } as User
     }
     throw new ValidationError('user')
 }
 
 export type Offer = {
-    id: number,
-    title: string,
-    description: string|null,
-    type: number,
-    typeString: string,
-    status: number,
-    statusString: string,
-    category: number,
-    categoryString: string,
-    squareMeters: number|null,
-    price: number|null,
+    id: number
+    title: string
+    description: string | null
+    type: number
+    typeString: string
+    status: number
+    statusString: string
+    category: number
+    categoryString: string
+    squareMeters: number | null
+    price: number | null
     location: {
-        lat: number,
-        lng: number,
-        city: string,
-        street: string | null,
-        house: string | null,
-        apt: string | null,
+        lat: number
+        lng: number
+        city: string
+        street: string | null
+        house: string | null
+        apt: string | null
     }
-    authorId: number,
-    createdAt: Date,
+    authorId: number
+    createdAt: Date
     photos: {
-        id: number,
+        id: number
         url: string
-    }[],
+    }[]
     activeUntil: Date
 }
 
@@ -92,11 +92,7 @@ export const validateOffer = (data: any): Offer => {
         typeof data.author_id === 'number' &&
         typeof data.created_at === 'string' &&
         data.photos instanceof Array &&
-        data.photos.every((item: any) => (
-            typeof item === 'object' &&
-            typeof item.id === 'number' &&
-            typeof item.photo === 'string'
-        )) &&
+        data.photos.every((item: any) => typeof item === 'object' && typeof item.id === 'number' && typeof item.photo === 'string') &&
         typeof data.active_until === 'string'
     ) {
         // django generic api view returns absolute url but regular api view doesnt, nice
@@ -111,15 +107,15 @@ export const validateOffer = (data: any): Offer => {
             description: data.description,
             type: data.type,
             get typeString() {
-                return OFFER_TYPES.find(t=>t.value === this.type)?.label ?? 'Unknown type'
+                return OFFER_TYPES.find((t) => t.value === this.type)?.label ?? 'Unknown type'
             },
             status: data.status,
             get statusString() {
-                return OFFER_STATUSES.find(s=>s.value === this.status)?.label ?? 'Unknown status'
+                return OFFER_STATUSES.find((s) => s.value === this.status)?.label ?? 'Unknown status'
             },
             category: data.category,
             get categoryString() {
-                return OFFER_CATEGORIES.find(c=>c.value === this.category)?.label ?? 'Unknown category'
+                return OFFER_CATEGORIES.find((c) => c.value === this.category)?.label ?? 'Unknown category'
             },
             squareMeters: data.square_meters,
             price: data.price,
@@ -136,10 +132,10 @@ export const validateOffer = (data: any): Offer => {
             photos: data.photos.map((item: any) => {
                 return {
                     id: item.id,
-                    url: item.photo
+                    url: item.photo,
                 }
             }),
-            activeUntil: new Date(data.active_until)
+            activeUntil: new Date(data.active_until),
         } as Offer
     }
     throw new ValidationError('offer')
@@ -147,7 +143,7 @@ export const validateOffer = (data: any): Offer => {
 
 export const validateOffers = (data: any): Offer[] => {
     if (data instanceof Array) {
-        return data.map(item => validateOffer(item))
+        return data.map((item) => validateOffer(item))
     }
     throw new ValidationError('offer')
 }

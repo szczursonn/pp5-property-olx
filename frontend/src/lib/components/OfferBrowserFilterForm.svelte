@@ -1,22 +1,21 @@
 <script lang="ts">
-    import { OFFER_CATEGORIES, OFFER_TYPES } from "$lib/constants";
+    import { OFFER_CATEGORIES, OFFER_TYPES } from '$lib/constants'
     import { page } from '$app/stores'
 
     let category: number
     let type: number
     let city: string = ''
     let proximity: number
-    let priceMin: number|null = null
-    let priceMax: number|null = null
-    let areaMin: number|null = null
-    let areaMax: number|null = null
+    let priceMin: number | null = null
+    let priceMax: number | null = null
+    let areaMin: number | null = null
+    let areaMax: number | null = null
 
-    const PROXIMITY_OPTIONS = [0,5,10,15,25,50,75]
+    const PROXIMITY_OPTIONS = [0, 5, 10, 15, 25, 50, 75]
 
     const handleSubmit = () => {
-        
         // validation here
-        
+
         const searchParams = new URLSearchParams()
         searchParams.set('category', category.toString())
         searchParams.set('type', type.toString())
@@ -30,7 +29,7 @@
         onSubmit(searchParams)
     }
 
-    page.subscribe(_page=>{
+    page.subscribe((_page) => {
         const params = new URLSearchParams(_page.url.search)
         const _category = params.get('category')
         const _type = params.get('type')
@@ -50,9 +49,44 @@
         areaMax = _areaMax ? parseInt(_areaMax) : null
     })
 
-    export let onSubmit: (filter: URLSearchParams)=>void
-    
+    export let onSubmit: (filter: URLSearchParams) => void
 </script>
+
+<form on:submit|preventDefault={handleSubmit}>
+    <select bind:value={category}>
+        {#each OFFER_CATEGORIES as { label, value }}
+            <option {value}>{label}</option>
+        {/each}
+    </select>
+    <select bind:value={type}>
+        {#each OFFER_TYPES as { label, value }}
+            <option {value}>{label}</option>
+        {/each}
+    </select>
+    <input type="text" placeholder="City" bind:value={city} />
+    <select bind:value={proximity}>
+        {#each PROXIMITY_OPTIONS as value}
+            <option {value}>{value} km</option>
+        {/each}
+    </select>
+    <div class="filter-form-input">
+        <input type="number" placeholder="Price minimum" bind:value={priceMin} />
+        <span>zł</span>
+    </div>
+    <div class="filter-form-input">
+        <input type="number" placeholder="Price maximum" bind:value={priceMax} />
+        <span>zł</span>
+    </div>
+    <div class="filter-form-input">
+        <input type="number" placeholder="Surface area minimum" bind:value={areaMin} />
+        <span>m²</span>
+    </div>
+    <div class="filter-form-input">
+        <input type="number" placeholder="Surface area maximum" bind:value={areaMax} />
+        <span>m²</span>
+    </div>
+    <input type="submit" value="Find" />
+</form>
 
 <style lang="scss">
     form {
@@ -80,7 +114,7 @@
     select {
         @extend input;
     }
-    input[type=submit] {
+    input[type='submit'] {
         color: whitesmoke;
         background-color: var(--cta);
         padding: 9px 30px;
@@ -93,39 +127,3 @@
         }
     }
 </style>
-
-<form on:submit|preventDefault={handleSubmit}>
-    <select bind:value={category}>
-        {#each OFFER_CATEGORIES as {label, value}}
-            <option value={value}>{label}</option>
-        {/each}
-    </select>
-    <select bind:value={type}>
-        {#each OFFER_TYPES as {label, value}}
-            <option value={value}>{label}</option>
-        {/each}
-    </select>
-    <input type="text" placeholder="City" bind:value={city}>
-    <select bind:value={proximity}>
-        {#each PROXIMITY_OPTIONS as value}
-            <option value={value}>{value} km</option>
-        {/each}
-    </select>
-    <div class="filter-form-input">
-        <input type="number" placeholder="Price minimum" bind:value={priceMin}>
-        <span>zł</span>
-    </div>
-    <div class="filter-form-input">
-        <input type="number" placeholder="Price maximum" bind:value={priceMax}>
-        <span>zł</span>
-    </div>
-    <div class="filter-form-input">
-        <input type="number" placeholder="Surface area minimum" bind:value={areaMin}>
-        <span>m²</span>
-    </div>
-    <div class="filter-form-input">
-        <input type="number" placeholder="Surface area maximum" bind:value={areaMax}>
-        <span>m²</span>
-    </div>
-    <input type="submit" value="Find">
-</form>

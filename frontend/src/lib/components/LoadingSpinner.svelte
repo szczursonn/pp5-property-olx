@@ -1,5 +1,8 @@
-<style lang="scss">
+<svg class="spinner">
+    <circle cx="20" cy="20" r="18" />
+</svg>
 
+<style lang="scss">
     $spinnerSize: 40;
 
     .spinner {
@@ -7,11 +10,11 @@
         height: $spinnerSize + px;
         x: 0px;
         y: 0px;
-        viewBox: 0 0 $spinnerSize $spinnerSize;
-    
+        viewbox: 0 0 $spinnerSize $spinnerSize;
+
         circle {
             fill: transparent;
-            stroke: #00B54B;
+            stroke: #00b54b;
             stroke-width: 4;
             stroke-linecap: round;
             stroke-dasharray: (3.14 * $spinnerSize);
@@ -27,15 +30,17 @@
             animation: spinner 4s linear infinite;
         }
     }
-    
+
     @-webkit-keyframes spinner {
         0% {
             -webkit-transform: rotate(0deg);
             stroke-dashoffset: (0.66 * $spinnerSize);
-        } 50% {
+        }
+        50% {
             -webkit-transform: rotate(720deg);
             stroke-dashoffset: (3.14 * $spinnerSize);
-        } 100% {
+        }
+        100% {
             -webkit-transform: rotate(1080deg);
             stroke-dashoffset: (0.66 * $spinnerSize);
         }
@@ -45,10 +50,12 @@
         0% {
             -moz-transform: rotate(0deg);
             stroke-dashoffset: (0.66 * $spinnerSize);
-        } 50% {
+        }
+        50% {
             -moz-transform: rotate(720deg);
             stroke-dashoffset: (3.14 * $spinnerSize);
-        } 100% {
+        }
+        100% {
             -moz-transform: rotate(1080deg);
             stroke-dashoffset: (0.66 * $spinnerSize);
         }
@@ -58,10 +65,12 @@
         0% {
             -ms-transform: rotate(0deg);
             stroke-dashoffset: (0.66 * $spinnerSize);
-        } 50% {
+        }
+        50% {
             -ms-transform: rotate(720deg);
             stroke-dashoffset: (3.14 * $spinnerSize);
-        } 100% {
+        }
+        100% {
             -ms-transform: rotate(1080deg);
             stroke-dashoffset: (0.66 * $spinnerSize);
         }
@@ -71,30 +80,29 @@
         0% {
             -o-transform: rotate(0deg);
             stroke-dashoffset: (0.66 * $spinnerSize);
-        } 50% {
+        }
+        50% {
             -o-transform: rotate(720deg);
             stroke-dashoffset: (3.14 * $spinnerSize);
-        } 100% {
+        }
+        100% {
             -o-transform: rotate(1080deg);
             stroke-dashoffset: (0.66 * $spinnerSize);
         }
     }
-    
+
     @keyframes spinner {
         0% {
             transform: rotate(0deg);
             stroke-dashoffset: (0.66 * $spinnerSize);
-        } 50% {
+        }
+        50% {
             transform: rotate(720deg);
             stroke-dashoffset: (3.14 * $spinnerSize);
-        } 100% {
+        }
+        100% {
             transform: rotate(1080deg);
             stroke-dashoffset: (0.66 * $spinnerSize);
         }
     }
-
 </style>
-
-<svg class="spinner">
-    <circle cx="20" cy="20" r="18"></circle>
-</svg>
